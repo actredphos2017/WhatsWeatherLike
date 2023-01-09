@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="20dp"
+    app:cardCornerRadius="28dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 背景图像 -->
+        <ImageView
+            android:id="@+id/iv_cardWeatherBackground"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/sunny"
+            app:layout_constraintTop_toTopOf="@+id/constraintLayout"
+            tools:ignore="ContentDescription"
+            tools:layout_editor_absoluteX="26dp" />
+
+        <!-- 更新时间 -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="end|bottom"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="5dp"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintEnd_toEndOf="@+id/iv_cardWeatherBackground">
+
+            <ImageView
+                android:layout_gravity="center"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="5dp"
+                android:src="@mipmap/clock_icon"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/tv_updateTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="22:02"
+                android:textColor="@color/lightWhite"
+                android:textSize="14sp"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:text="@string/update"
+                android:textColor="@color/lightWhite"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 城市标题 -->
+        <TextView
+            android:id="@+id/tv_cityTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            android:background="@drawable/radius_rectangle"
+            android:padding="10dp"
+            android:text="@string/locating"
+            android:textAlignment="center"
+            android:textColor="@color/lightBlack"
+            android:textSize="36sp"
+            app:layout_constraintTop_toTopOf="@+id/constraintLayout"
+            tools:layout_editor_absoluteX="16dp" />
+
+        <!-- 近日天气 -->
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="12dp"
+            android:background="@drawable/radius_rectangle"
+            android:orientation="vertical"
+            android:padding="10dp"
+            app:layout_constraintBottom_toBottomOf="@+id/constraintLayout"
+            tools:layout_editor_absoluteX="12dp">
+
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3">
+
+                <TextView
+                    android:layout_columnWeight="1"
+                    android:text="@string/today"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightBlack"
+                    android:textSize="24sp" />
+
+                <LinearLayout
+                    android:layout_height="match_parent"
+                    android:layout_columnWeight="1"
+                    android:orientation="horizontal"
+                    tools:ignore="UseCompoundDrawables">
+
+                    <ImageView
+                        android:id="@+id/iv_todayWeather"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@mipmap/sunny_icon"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/tv_todayWeather"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/sunny"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/lightBlack"
+                        android:textSize="24sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_todayTemper"
+                    android:layout_columnWeight="1"
+                    android:text="12 / 18 ℃"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightBlack"
+                    android:textSize="24sp"
+                    tools:ignore="HardcodedText" />
+
+            </GridLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/lightGrey" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3">
+
+                <TextView
+                    android:layout_columnWeight="1"
+                    android:text="@string/tomorrow"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightBlack"
+                    android:textSize="24sp" />
+
+                <LinearLayout
+                    android:layout_height="match_parent"
+                    android:layout_columnWeight="1"
+                    android:orientation="horizontal"
+                    tools:ignore="UseCompoundDrawables">
+
+                    <ImageView
+                        android:id="@+id/iv_tomorrowWeather"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@mipmap/sunny_icon"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/tv_tomorrowWeather"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/sunny"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/lightBlack"
+                        android:textSize="24sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_tomorrowTemper"
+                    android:layout_columnWeight="1"
+                    android:text="12 / 18 ℃"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightBlack"
+                    android:textSize="24sp"
+                    tools:ignore="HardcodedText" />
+
+            </GridLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/lightGrey" />
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="3">
+
+                <TextView
+                    android:layout_columnWeight="1"
+                    android:text="@string/tuesday"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightBlack"
+                    android:textSize="24sp" />
+
+                <LinearLayout
+                    android:layout_height="match_parent"
+                    android:layout_columnWeight="1"
+                    android:orientation="horizontal"
+                    tools:ignore="UseCompoundDrawables">
+
+                    <ImageView
+                        android:id="@+id/iv_dayAfterTomorrowWeather"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@mipmap/sunny_icon"
+                        tools:ignore="ContentDescription" />
+
+                    <TextView
+                        android:id="@+id/tv_dayAfterTomorrowWeather"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/sunny"
+                        android:textAlignment="textStart"
+                        android:textColor="@color/lightBlack"
+                        android:textSize="24sp" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_dayAfterTomorrowTemper"
+                    android:layout_columnWeight="1"
+                    android:text="12 / 18 ℃"
+                    android:textAlignment="center"
+                    android:textColor="@color/lightBlack"
+                    android:textSize="24sp"
+                    tools:ignore="HardcodedText" />
+
+            </GridLayout>
+
+        </LinearLayout>
+
+        <!-- 简单信息 -->
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground"
+            android:orientation="vertical"
+            android:layout_marginStart="20dp"
+            android:layout_marginBottom="5dp">
+
+            <!-- 当前温度 -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
+                app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground">
+
+                <TextView
+                    android:id="@+id/tv_nowTemper"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:shadowColor="@color/shadowBlack"
+                    android:shadowRadius="20"
+                    android:text="16"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="60sp"
+                    app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+                    app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:shadowColor="@color/shadowBlack"
+                    android:shadowRadius="20"
+                    android:text="@string/centigrade"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="32sp"
+                    app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+                    app:layout_constraintStart_toEndOf="@+id/textView" />
+
+            </LinearLayout>
+
+            <!-- 空气指数 -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center|start">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/AQI"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="18sp"/>
+
+                <TextView
+                    android:id="@+id/tv_aqi"
+                    android:layout_marginStart="5dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="99"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="18sp"
+                    tools:ignore="HardcodedText" />
+
+                <ImageView
+                    android:layout_width="18sp"
+                    android:layout_height="18sp"
+                    android:layout_marginStart="5dp"
+                    android:src="@mipmap/aqi_great_icon"
+                    tools:ignore="ContentDescription" />
+
+            </LinearLayout>
+
+            <!-- 天气与风向 -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center|start">
+
+                <TextView
+                    android:id="@+id/tv_nowWeather"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sunny"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="18sp"/>
+
+                <View
+                    android:layout_width="1.5dp"
+                    android:layout_height="match_parent"
+                    android:layout_margin="4dp"
+                    android:layout_gravity="center"
+                    android:background="@color/lightWhite"/>
+
+                <TextView
+                    android:id="@+id/windDirection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/WD1"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="18sp"/>
+
+                <TextView
+                    android:id="@+id/windStrength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="@string/WS1"
+                    android:textColor="@color/lightWhite"
+                    android:textSize="18sp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>
