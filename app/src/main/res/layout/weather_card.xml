@@ -116,7 +116,7 @@
                         android:id="@+id/tv_todayWeather"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/sunny"
+                        android:text="@string/weatherType00"
                         android:textAlignment="textStart"
                         android:textColor="@color/lightBlack"
                         android:textSize="24sp" />
@@ -170,7 +170,7 @@
                         android:id="@+id/tv_tomorrowWeather"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/sunny"
+                        android:text="@string/weatherType00"
                         android:textAlignment="textStart"
                         android:textColor="@color/lightBlack"
                         android:textSize="24sp" />
@@ -201,8 +201,9 @@
                 android:columnCount="3">
 
                 <TextView
+                    android:id="@+id/tv_weekDayOfDayAfterTomorrow"
                     android:layout_columnWeight="1"
-                    android:text="@string/tuesday"
+                    android:text="@string/dayOfWeek3"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
                     android:textSize="24sp" />
@@ -224,7 +225,7 @@
                         android:id="@+id/tv_dayAfterTomorrowWeather"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/sunny"
+                        android:text="@string/weatherType00"
                         android:textAlignment="textStart"
                         android:textColor="@color/lightBlack"
                         android:textSize="24sp" />
@@ -315,6 +316,7 @@
                     tools:ignore="HardcodedText" />
 
                 <ImageView
+                    android:id="@+id/iv_aqiGrade"
                     android:layout_width="18sp"
                     android:layout_height="18sp"
                     android:layout_marginStart="5dp"
@@ -334,7 +336,7 @@
                     android:id="@+id/tv_nowWeather"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sunny"
+                    android:text="@string/weatherType00"
                     android:textColor="@color/lightWhite"
                     android:textSize="18sp"/>
 
@@ -346,7 +348,7 @@
                     android:background="@color/lightWhite"/>
 
                 <TextView
-                    android:id="@+id/windDirection"
+                    android:id="@+id/tv_windDirection"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/WD1"
@@ -354,7 +356,7 @@
                     android:textSize="18sp"/>
 
                 <TextView
-                    android:id="@+id/windStrength"
+                    android:id="@+id/tv_windStrength"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
