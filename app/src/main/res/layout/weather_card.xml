@@ -27,16 +27,16 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="end|bottom"
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="5dp"
+            android:gravity="end|bottom"
             app:layout_constraintBottom_toTopOf="@+id/linearLayout"
             app:layout_constraintEnd_toEndOf="@+id/iv_cardWeatherBackground">
 
             <ImageView
-                android:layout_gravity="center"
                 android:layout_width="16dp"
                 android:layout_height="16dp"
+                android:layout_gravity="center"
                 android:layout_marginEnd="5dp"
                 android:src="@mipmap/clock_icon"
                 tools:ignore="ContentDescription" />
@@ -45,7 +45,7 @@
                 android:id="@+id/tv_updateTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="22:02"
+                android:text="@string/getting"
                 android:textColor="@color/lightWhite"
                 android:textSize="14sp"
                 tools:ignore="HardcodedText" />
@@ -70,9 +70,10 @@
             android:text="@string/locating"
             android:textAlignment="center"
             android:textColor="@color/lightBlack"
-            android:textSize="36sp"
-            app:layout_constraintTop_toTopOf="@+id/constraintLayout"
-            tools:layout_editor_absoluteX="16dp" />
+            android:textSize="24sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <!-- 近日天气 -->
         <LinearLayout
@@ -87,23 +88,34 @@
             tools:layout_editor_absoluteX="12dp">
 
 
-            <GridLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:columnCount="3">
+                android:layout_height="wrap_content">
 
                 <TextView
-                    android:layout_columnWeight="1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/today"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
-                    android:textSize="24sp" />
+                    android:textSize="24sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_columnWeight="1"
+                    android:layout_gravity="center"
+                    android:gravity="center"
                     android:orientation="horizontal"
-                    tools:ignore="UseCompoundDrawables">
+                    android:paddingEnd="40dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:ignore="RtlSymmetry,UseCompoundDrawables">
 
                     <ImageView
                         android:id="@+id/iv_todayWeather"
@@ -116,7 +128,7 @@
                         android:id="@+id/tv_todayWeather"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/weatherType00"
+                        android:text="@string/getting"
                         android:textAlignment="textStart"
                         android:textColor="@color/lightBlack"
                         android:textSize="24sp" />
@@ -125,14 +137,19 @@
 
                 <TextView
                     android:id="@+id/tv_todayTemper"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:text="12 / 18 ℃"
+                    android:text="@string/getting"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
                     android:textSize="24sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="HardcodedText" />
 
-            </GridLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <View
                 android:layout_width="match_parent"
@@ -141,23 +158,33 @@
                 android:layout_marginBottom="5dp"
                 android:background="@color/lightGrey" />
 
-            <GridLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:columnCount="3">
+                android:layout_height="wrap_content">
 
                 <TextView
-                    android:layout_columnWeight="1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/tomorrow"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
-                    android:textSize="24sp" />
+                    android:textSize="24sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_columnWeight="1"
+                    android:layout_gravity="center"
+                    android:gravity="center"
                     android:orientation="horizontal"
-                    tools:ignore="UseCompoundDrawables">
+                    android:paddingEnd="40dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:ignore="RtlSymmetry,UseCompoundDrawables">
 
                     <ImageView
                         android:id="@+id/iv_tomorrowWeather"
@@ -170,7 +197,7 @@
                         android:id="@+id/tv_tomorrowWeather"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/weatherType00"
+                        android:text="@string/getting"
                         android:textAlignment="textStart"
                         android:textColor="@color/lightBlack"
                         android:textSize="24sp" />
@@ -179,14 +206,19 @@
 
                 <TextView
                     android:id="@+id/tv_tomorrowTemper"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:text="12 / 18 ℃"
+                    android:text="@string/getting"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
                     android:textSize="24sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="HardcodedText" />
 
-            </GridLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <View
                 android:layout_width="match_parent"
@@ -195,24 +227,34 @@
                 android:layout_marginBottom="5dp"
                 android:background="@color/lightGrey" />
 
-            <GridLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:columnCount="3">
+                android:layout_height="wrap_content">
 
                 <TextView
                     android:id="@+id/tv_weekDayOfDayAfterTomorrow"
-                    android:layout_columnWeight="1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/dayOfWeek3"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
-                    android:textSize="24sp" />
+                    android:textSize="24sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:layout_columnWeight="1"
+                    android:layout_gravity="center"
+                    android:gravity="center"
                     android:orientation="horizontal"
-                    tools:ignore="UseCompoundDrawables">
+                    android:paddingEnd="40dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:ignore="RtlSymmetry,UseCompoundDrawables">
 
                     <ImageView
                         android:id="@+id/iv_dayAfterTomorrowWeather"
@@ -225,7 +267,7 @@
                         android:id="@+id/tv_dayAfterTomorrowWeather"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/weatherType00"
+                        android:text="@string/getting"
                         android:textAlignment="textStart"
                         android:textColor="@color/lightBlack"
                         android:textSize="24sp" />
@@ -234,14 +276,19 @@
 
                 <TextView
                     android:id="@+id/tv_dayAfterTomorrowTemper"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:layout_columnWeight="1"
-                    android:text="12 / 18 ℃"
+                    android:text="@string/getting"
                     android:textAlignment="center"
                     android:textColor="@color/lightBlack"
                     android:textSize="24sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     tools:ignore="HardcodedText" />
 
-            </GridLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
 
@@ -250,11 +297,11 @@
             android:id="@+id/linearLayout2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
-            app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground"
-            android:orientation="vertical"
             android:layout_marginStart="20dp"
-            android:layout_marginBottom="5dp">
+            android:layout_marginBottom="5dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground">
 
             <!-- 当前温度 -->
             <LinearLayout
@@ -295,22 +342,22 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center|start">
+                android:gravity="center|start"
+                android:orientation="horizontal">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/AQI"
                     android:textColor="@color/lightWhite"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tv_aqi"
-                    android:layout_marginStart="5dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="99"
+                    android:layout_marginStart="5dp"
+                    android:text="@string/getting"
                     android:textColor="@color/lightWhite"
                     android:textSize="18sp"
                     tools:ignore="HardcodedText" />
@@ -329,40 +376,39 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center|start">
+                android:gravity="center|start"
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tv_nowWeather"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/weatherType00"
+                    android:text="@string/getting"
                     android:textColor="@color/lightWhite"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp" />
 
                 <View
                     android:layout_width="1.5dp"
                     android:layout_height="match_parent"
-                    android:layout_margin="4dp"
                     android:layout_gravity="center"
-                    android:background="@color/lightWhite"/>
+                    android:layout_margin="4dp"
+                    android:background="@color/lightWhite" />
 
                 <TextView
                     android:id="@+id/tv_windDirection"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/WD1"
+                    android:text="@string/getting"
                     android:textColor="@color/lightWhite"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tv_windStrength"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="@string/WS1"
                     android:textColor="@color/lightWhite"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp" />
 
             </LinearLayout>
 

@@ -14,6 +14,10 @@ import androidx.viewpager2.widget.ViewPager2
 
 class MainActivity : Activity() {
 
+    var caiyunWeatherKey = "mkhvpq9w0AsN6gjl"
+
+    var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
+
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
             ?.run(::getString) ?: ""
@@ -24,19 +28,15 @@ class MainActivity : Activity() {
 
         findViewById<ViewPager2>(R.id.vp_cardsView).adapter = this.UserCitiesAdapter(
             arrayListOf(
-                CityWeatherModel.getExampleModel(),
-                CityWeatherModel.getExampleModel(),
-                CityWeatherModel.getExampleModel(),
-                CityWeatherModel.getExampleModel(),
-                CityWeatherModel.getExampleModel(),
-                CityWeatherModel.getExampleModel()
+                Pair(113.1257, 22.4219),
+                Pair(112.1257, 32.4219)
             )
         )
     }
 
 
     inner class UserCitiesAdapter(
-        private var list: ArrayList<CityWeatherModel>,
+        private var list: ArrayList<Pair<Double, Double>>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
 
@@ -73,40 +73,66 @@ class MainActivity : Activity() {
                 view.findViewById(R.id.iv_dayAfterTomorrowWeather)
 
             @SuppressLint("SetTextI18n")
-            fun build(model: CityWeatherModel) {
-                cityNameTV.text = model.cityName
-                updateTimeTV.text = model.updateTime
-                nowTemperTV.text = model.nowTemper.toString()
-                nowAqiTV.text = model.nowAQI.toString()
-                newAqiGradeIV.setImageResource(CityWeatherModel.toAqiIcon(model.nowAQI))
-                nowWeatherTV.text = getStringResource("weatherType${model.nowWeatherID}")
-                nowWindDirectionTV.text = getStringResource("WD${model.nowWD}")
-                nowWindStrengthTV.text = getStringResource("WS${model.nowWS}")
+            fun build(position: Pair<Double, Double>) {
 
-                nowWeatherBackground.setImageResource(
-                    CityWeatherModel.toWeatherBackground(model.nowWeatherID)(CityWeatherModel.TIME_NORMAL)
-                )
+                Thread {
 
-                todayWeatherTV.text = getStringResource("weatherType${model.todayWeatherID}")
+                    val model = CityWeatherModel()
 
-                todayTemperTV.text = "${model.todayTemper.first} / ${model.todayTemper.second} ℃"
+                    if(model.updateWithAreaID(caiyunWeatherKey, position.first, position.second).weatherInfo == null){
+                        return@Thread
+                    }
 
-                todayWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(model.todayWeatherID))
+                    val weather = model.weatherInfo!!.result
 
-                tomorrowWeatherTV.text = getStringResource("weatherType${model.tomorrowWeatherID}")
+                    val cityNameBuilder = StringBuilder()
 
-                tomorrowTemperTV.text =
-                    "${model.tomorrowTemper.first} / ${model.tomorrowTemper.second} ℃"
+                    for(it in weather.alert.adcodes)
+                        cityNameBuilder.append(it.name)
 
-                tomorrowWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(model.tomorrowWeatherID))
+                    runOnUiThread {
+                        cityNameTV.text = cityNameBuilder.toString()
+                        updateTimeTV.text = model.updateTime
+                        nowTemperTV.text = weather.realtime.temperature.toString()
+                        nowAqiTV.text = weather.realtime.airQuality.aqi.chn.toString()
+                        newAqiGradeIV.setImageResource(CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn))
+                        nowWeatherTV.text = getStringResource(weather.realtime.skycon)
+                        nowWindDirectionTV.text = getStringResource("WD${CityWeatherModel.windDirectionIndicator(weather.realtime.wind.direction)}")
+                        nowWindStrengthTV.text = getStringResource("WS${CityWeatherModel.windStrengthIndicator(weather.realtime.wind.speed)}")
 
-                weekDayOfDayAfterTomorrowTV.text =
-                    getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
-                dayAfterTomorrowWeatherTV.text =
-                    getStringResource("weatherType${model.tomorrowWeatherID}")
-                dayAfterTomorrowTemperTV.text =
-                    "${model.dayAfterTomorrowTemper.first} / ${model.dayAfterTomorrowTemper.second} ℃"
-                dayAfterTomorrowWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(model.dayAfterTomorrowWeatherID))
+                        nowWeatherBackground.setImageResource(
+                            CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
+                                CityWeatherModel.TIME_NORMAL
+                            )
+                        )
+
+                        todayWeatherTV.text =
+                            getStringResource(weather.daily.skycon[0].value)
+
+                        todayTemperTV.text =
+                            "${weather.daily.temperature[0].max.toInt()} / ${weather.daily.temperature[0].min.toInt()} ℃"
+
+                        todayWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[0].value))
+
+                        tomorrowWeatherTV.text =
+                            getStringResource(weather.daily.skycon[1].value)
+
+                        tomorrowTemperTV.text =
+                            "${weather.daily.temperature[1].max.toInt()} / ${weather.daily.temperature[1].min.toInt()} ℃"
+
+                        tomorrowWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[1].value))
+
+                        weekDayOfDayAfterTomorrowTV.text =
+                            getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
+                        dayAfterTomorrowWeatherTV.text =
+                            getStringResource(weather.daily.skycon[2].value)
+                        dayAfterTomorrowTemperTV.text =
+                            "${weather.daily.temperature[2].max.toInt()} / ${weather.daily.temperature[2].min.toInt()} ℃"
+                        dayAfterTomorrowWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[2].value))
+                    }
+                }.start()
+
+
             }
         }
 
