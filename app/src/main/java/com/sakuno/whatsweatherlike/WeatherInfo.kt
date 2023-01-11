@@ -1,3 +1,5 @@
+package com.sakuno.whatsweatherlike
+
 import com.google.gson.annotations.SerializedName
 
 data class WeatherInfo(
@@ -588,7 +590,7 @@ data class Local(
     @SerializedName("datasource")
     val datasource: String,
     @SerializedName("intensity")
-    val intensity: Int,
+    val intensity: Double,
     @SerializedName("status")
     val status: String
 )
