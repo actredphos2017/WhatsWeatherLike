@@ -8,8 +8,12 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="white_translation">#EBFFFFFF</color>
-    <color name="lightBlack">#A1464646</color>
-    <color name="lightGrey">#43202020</color>
-    <color name="lightWhite">#FFFFFF</color>
-    <color name="shadowBlack">#9A000000</color>
+    <color name="light_black">#A1464646</color>
+    <color name="light_grey">#43202020</color>
+    <color name="light_white">#FFFFFF</color>
+    <color name="shadow_black">#9A000000</color>
+    <color name="light_green">#E1B0FF9F</color>
+    <color name="deep_green">#36B81B</color>
+    <color name="deep_blue">#113CBF</color>
+    <color name="light_blue">#43A1FF</color>
 </resources>
