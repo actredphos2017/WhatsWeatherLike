@@ -2,14 +2,21 @@ package com.sakuno.whatsweatherlike
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Dialog
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.sakuno.whatsweatherlike.customwidgets.LineChart
+import com.sakuno.whatsweatherlike.utils.MyTime
 
 
 class MainActivity : Activity() {
@@ -17,6 +24,8 @@ class MainActivity : Activity() {
     var caiyunWeatherKey = "mkhvpq9w0AsN6gjl"
 
     var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
+
+    var detailDialog: Dialog? = null
 
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
@@ -28,12 +37,76 @@ class MainActivity : Activity() {
 
         findViewById<ViewPager2>(R.id.vp_cardsView).adapter = this.UserCitiesAdapter(
             arrayListOf(
-                Pair(113.1257, 22.4219),
-                Pair(112.1257, 32.4219)
+                Pair(113.1257, 22.4219), Pair(112.1257, 32.4219), Pair(113.5000, 24.3000)
             )
         )
     }
 
+    fun showDetailInfoDialog(model: CityWeatherModel) = run { initDetailInfoDialog(model).show() }
+
+    fun initDetailInfoDialog(model: CityWeatherModel): Dialog {
+
+        detailDialog = Dialog(this, R.style.dialog_bottom_full)
+
+        val view = View.inflate(this, R.layout.detailed_info, null)
+        val weather = model.weatherInfo?.result
+
+        detailDialog!!.setCanceledOnTouchOutside(true)
+        detailDialog!!.setCancelable(true)
+
+        val window = detailDialog!!.window!!
+        window.setGravity(Gravity.BOTTOM)
+        window.setWindowAnimations(R.style.share_animation)
+
+        window.setContentView(view)
+        window.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
+        )
+
+        if (weather != null) runOnUiThread {
+            view.findViewById<ProgressBar>(R.id.detail_pb_aqiGrade).progress =
+                weather.realtime.airQuality.aqi.chn
+            view.findViewById<TextView>(R.id.detail_tv_aqiNum).text =
+                weather.realtime.airQuality.aqi.chn.toString()
+            view.findViewById<TextView>(R.id.detail_tv_aqiGrade).text =
+                getStringResource(CityWeatherModel.toAqiGradeStringResourceName(weather.realtime.airQuality.aqi.chn))
+
+
+            val dataArray = weather.minutely.precipitation2h.toDoubleArray()
+            val currentTime = MyTime.fromString(model.updateTime)
+            var maxPrecipitation: Float
+            var startIndexes: IntArray
+            var endIndexes: IntArray
+            var isRaining: Boolean
+            var precipitationDesc: String
+
+            view.findViewById<LineChart>(R.id.detail_lc_realtime_precipitation).apply {
+                setDataArray(dataArray)
+                lineColor = getColor(R.color.deep_blue)
+                lineBackgroundColor = getColor(R.color.light_blue)
+                showBottomScale = true
+                bottomScaleType = LineChart.ScaleType.TIME
+                bottomScaleDisplayType = LineChart.ScaleDisplayType.START_AND_END
+                startTime = currentTime
+                stepTime = MyTime.fromMinute(1)
+                maxPrecipitation = maxData
+                startIndexes = startIndex.toIntArray()
+                endIndexes = endIndex.toIntArray()
+                isRaining = notZeroAtBeginning
+                applyChanges()
+            }
+            view.findViewById<TextView>(R.id.detail_tv_max_precipitation).text =
+                if (maxPrecipitation != 0f) maxPrecipitation.toString() else ""
+
+            if (isRaining) {
+                if (endIndexes.isEmpty()) {
+                    precipitationDesc = "雨将会"
+                }
+            }
+        }
+
+        return detailDialog!!
+    }
 
     inner class UserCitiesAdapter(
         private var list: ArrayList<Pair<Double, Double>>,
@@ -72,6 +145,8 @@ class MainActivity : Activity() {
             private val dayAfterTomorrowWeatherIV: ImageView =
                 view.findViewById(R.id.iv_dayAfterTomorrowWeather)
 
+            private val detailBtn: View = view.findViewById(R.id.btn_to_detail)
+
             @SuppressLint("SetTextI18n")
             fun build(position: Pair<Double, Double>) {
 
@@ -79,7 +154,10 @@ class MainActivity : Activity() {
 
                     val model = CityWeatherModel()
 
-                    if(model.updateWithAreaID(caiyunWeatherKey, position.first, position.second).weatherInfo == null){
+                    if (model.updateWithAreaID(
+                            caiyunWeatherKey, position.first, position.second
+                        ).weatherInfo == null
+                    ) {
                         return@Thread
                     }
 
@@ -87,8 +165,7 @@ class MainActivity : Activity() {
 
                     val cityNameBuilder = StringBuilder()
 
-                    for(it in weather.alert.adcodes)
-                        cityNameBuilder.append(it.name)
+                    for (it in weather.alert.adcodes) cityNameBuilder.append(it.name)
 
                     runOnUiThread {
                         cityNameTV.text = cityNameBuilder.toString()
@@ -97,8 +174,26 @@ class MainActivity : Activity() {
                         nowAqiTV.text = weather.realtime.airQuality.aqi.chn.toString()
                         newAqiGradeIV.setImageResource(CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn))
                         nowWeatherTV.text = getStringResource(weather.realtime.skycon)
-                        nowWindDirectionTV.text = getStringResource("WD${CityWeatherModel.windDirectionIndicator(weather.realtime.wind.direction)}")
-                        nowWindStrengthTV.text = getStringResource("WS${CityWeatherModel.windStrengthIndicator(weather.realtime.wind.speed)}")
+                        nowWindDirectionTV.text = getStringResource(
+                            "WD${
+                                CityWeatherModel.windDirectionIndicator(
+                                    weather.realtime.wind.direction
+                                )
+                            }"
+                        )
+                        nowWindStrengthTV.text = getStringResource(
+                            "WS${
+                                CityWeatherModel.windStrengthIndicator(
+                                    weather.realtime.wind.speed
+                                )
+                            }"
+                        )
+
+                        nowWeatherBackground.startAnimation(
+                            AnimationUtils.loadAnimation(
+                                this@MainActivity, R.anim.alpha_show
+                            )
+                        )
 
                         nowWeatherBackground.setImageResource(
                             CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
@@ -106,21 +201,24 @@ class MainActivity : Activity() {
                             )
                         )
 
-                        todayWeatherTV.text =
-                            getStringResource(weather.daily.skycon[0].value)
+
+                        todayWeatherTV.text = getStringResource(weather.daily.skycon[0].value)
 
                         todayTemperTV.text =
                             "${weather.daily.temperature[0].max.toInt()} / ${weather.daily.temperature[0].min.toInt()} ℃"
 
                         todayWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[0].value))
 
-                        tomorrowWeatherTV.text =
-                            getStringResource(weather.daily.skycon[1].value)
+                        tomorrowWeatherTV.text = getStringResource(weather.daily.skycon[1].value)
 
                         tomorrowTemperTV.text =
                             "${weather.daily.temperature[1].max.toInt()} / ${weather.daily.temperature[1].min.toInt()} ℃"
 
-                        tomorrowWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[1].value))
+                        tomorrowWeatherIV.setImageResource(
+                            CityWeatherModel.toWeatherIcon(
+                                weather.daily.skycon[1].value
+                            )
+                        )
 
                         weekDayOfDayAfterTomorrowTV.text =
                             getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
@@ -128,15 +226,24 @@ class MainActivity : Activity() {
                             getStringResource(weather.daily.skycon[2].value)
                         dayAfterTomorrowTemperTV.text =
                             "${weather.daily.temperature[2].max.toInt()} / ${weather.daily.temperature[2].min.toInt()} ℃"
-                        dayAfterTomorrowWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[2].value))
+                        dayAfterTomorrowWeatherIV.setImageResource(
+                            CityWeatherModel.toWeatherIcon(
+                                weather.daily.skycon[2].value
+                            )
+                        )
+
+                        detailBtn.setOnClickListener {
+                            showDetailInfoDialog(model)
+                        }
+
                     }
                 }.start()
-
-
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserCitiesViewHolder {
+        override fun onCreateViewHolder(
+            parent: ViewGroup, viewType: Int
+        ): UserCitiesViewHolder {
             return UserCitiesViewHolder(
                 LayoutInflater.from(parent.context).inflate(R.layout.weather_card, parent, false)
             )

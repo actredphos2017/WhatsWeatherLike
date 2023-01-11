@@ -46,7 +46,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/getting"
-                android:textColor="@color/lightWhite"
+                android:textColor="@color/light_white"
                 android:textSize="14sp"
                 tools:ignore="HardcodedText" />
 
@@ -55,7 +55,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="5dp"
                 android:text="@string/update"
-                android:textColor="@color/lightWhite"
+                android:textColor="@color/light_white"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -69,7 +69,7 @@
             android:padding="10dp"
             android:text="@string/locating"
             android:textAlignment="center"
-            android:textColor="@color/lightBlack"
+            android:textColor="@color/light_black"
             android:textSize="24sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -97,7 +97,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/today"
                     android:textAlignment="center"
-                    android:textColor="@color/lightBlack"
+                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -130,7 +130,7 @@
                         android:layout_height="match_parent"
                         android:text="@string/getting"
                         android:textAlignment="textStart"
-                        android:textColor="@color/lightBlack"
+                        android:textColor="@color/light_black"
                         android:textSize="24sp" />
 
                 </LinearLayout>
@@ -142,7 +142,7 @@
                     android:layout_columnWeight="1"
                     android:text="@string/getting"
                     android:textAlignment="center"
-                    android:textColor="@color/lightBlack"
+                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -156,7 +156,7 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
-                android:background="@color/lightGrey" />
+                android:background="@color/light_grey" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -167,7 +167,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/tomorrow"
                     android:textAlignment="center"
-                    android:textColor="@color/lightBlack"
+                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -199,7 +199,7 @@
                         android:layout_height="match_parent"
                         android:text="@string/getting"
                         android:textAlignment="textStart"
-                        android:textColor="@color/lightBlack"
+                        android:textColor="@color/light_black"
                         android:textSize="24sp" />
 
                 </LinearLayout>
@@ -211,7 +211,7 @@
                     android:layout_columnWeight="1"
                     android:text="@string/getting"
                     android:textAlignment="center"
-                    android:textColor="@color/lightBlack"
+                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -225,7 +225,7 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="5dp"
                 android:layout_marginBottom="5dp"
-                android:background="@color/lightGrey" />
+                android:background="@color/light_grey" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -237,7 +237,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/dayOfWeek3"
                     android:textAlignment="center"
-                    android:textColor="@color/lightBlack"
+                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -269,7 +269,7 @@
                         android:layout_height="match_parent"
                         android:text="@string/getting"
                         android:textAlignment="textStart"
-                        android:textColor="@color/lightBlack"
+                        android:textColor="@color/light_black"
                         android:textSize="24sp" />
 
                 </LinearLayout>
@@ -281,7 +281,7 @@
                     android:layout_columnWeight="1"
                     android:text="@string/getting"
                     android:textAlignment="center"
-                    android:textColor="@color/lightBlack"
+                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -314,10 +314,10 @@
                     android:id="@+id/tv_nowTemper"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:shadowColor="@color/shadowBlack"
+                    android:shadowColor="@color/shadow_black"
                     android:shadowRadius="20"
                     android:text="16"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="60sp"
                     app:layout_constraintBottom_toTopOf="@+id/linearLayout"
                     app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground"
@@ -328,10 +328,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:layout_marginBottom="5dp"
-                    android:shadowColor="@color/shadowBlack"
+                    android:shadowColor="@color/shadow_black"
                     android:shadowRadius="20"
                     android:text="@string/centigrade"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="32sp"
                     app:layout_constraintBottom_toTopOf="@+id/linearLayout"
                     app:layout_constraintStart_toEndOf="@+id/textView" />
@@ -349,7 +349,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/AQI"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="18sp" />
 
                 <TextView
@@ -358,7 +358,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
                     android:text="@string/getting"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="18sp"
                     tools:ignore="HardcodedText" />
 
@@ -384,7 +384,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/getting"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="18sp" />
 
                 <View
@@ -392,14 +392,14 @@
                     android:layout_height="match_parent"
                     android:layout_gravity="center"
                     android:layout_margin="4dp"
-                    android:background="@color/lightWhite" />
+                    android:background="@color/light_white" />
 
                 <TextView
                     android:id="@+id/tv_windDirection"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/getting"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="18sp" />
 
                 <TextView
@@ -407,7 +407,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:textColor="@color/lightWhite"
+                    android:textColor="@color/light_white"
                     android:textSize="18sp" />
 
             </LinearLayout>
@@ -415,5 +415,11 @@
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
+        android:id="@+id/btn_to_detail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true" />
 
 </androidx.cardview.widget.CardView>

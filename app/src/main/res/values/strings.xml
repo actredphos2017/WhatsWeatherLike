@@ -97,7 +97,16 @@
 
     <string name="centigrade">℃</string>
     <string name="update">更新</string>
-    <string name="AQI">空气指数</string>
+
     <string name="getting">正在获取</string>
+
+    <string name="AQI">空气指数</string>
+    <string name="excellent">优</string>
+    <string name="great">良</string>
+    <string name="mild">轻</string>
+    <string name="moderate">中</string>
+    <string name="heavy">重</string>
+    <string name="severe">严</string>
+
 
 </resources>
