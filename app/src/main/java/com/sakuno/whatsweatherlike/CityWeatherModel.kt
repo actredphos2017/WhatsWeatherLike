@@ -1,11 +1,8 @@
 package com.sakuno.whatsweatherlike
 
-import WeatherInfo
-import android.telephony.CellSignalStrength
 import android.util.Log
 import com.google.gson.Gson
 import com.sakuno.whatsweatherlike.utils.OkHttpTools
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -150,7 +147,8 @@ class CityWeatherModel {
             when (it) {
                 "CLEAR_DAY", "CLEAR_NIGHT" -> sunnyMipmap
                 "PARTLY_CLOUDY_DAY", "PARTLY_CLOUDY_NIGHT", "CLOUDY", "WIND" -> cloudyMipmap
-                "LIGHT_HAZE", "MODERATE_HAZE", "HEAVY_HAZE", "FOG", "DUST", "SAND" -> foggyMipmap
+                "FOG" -> overcastMipmap
+                "LIGHT_HAZE", "MODERATE_HAZE", "HEAVY_HAZE",  "DUST", "SAND" -> foggyMipmap
                 "LIGHT_RAIN", "MODERATE_RAIN" -> rainyMipmap
                 "STORM_RAIN", "HEAVY_RAIN" -> thunderMipmap
                 "LIGHT_SNOW", "MODERATE_SNOW", "HEAVY_SNOW", "STORM_SNOW" -> snowMipmap
@@ -186,6 +184,15 @@ class CityWeatherModel {
             in 151..200 -> R.mipmap.aqi_moderate_icon
             in 201..300 -> R.mipmap.aqi_heavy_icon
             else -> R.mipmap.aqi_severe_icon
+        }
+
+        fun toAqiGradeStringResourceName(aqi: Int): String = when (aqi) {
+            in 0..50 -> "excellent"
+            in 51..100 -> "great"
+            in 101..150 -> "mild"
+            in 151..200 -> "moderate"
+            in 201..300 -> "heavy"
+            else -> "severe"
         }
     }
 }
