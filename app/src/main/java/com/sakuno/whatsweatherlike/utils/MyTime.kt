@@ -25,6 +25,17 @@ data class MyTime(
             }
             return MyTime(hour, min)
         }
+
+        // "2023-01-11T18:00+08:00"
+
+        fun fromCaiyunDateTimeString(datetime: String): MyTime = datetime
+            .split('T', '+')
+            .getOrElse(1) { "" }
+            .split(':')
+            .takeIf { it.size == 2 }
+            ?.run { MyTime(get(0).toIntOrNull() ?: 0, get(1).toIntOrNull() ?: 0) }
+            ?:MyTime(0, 0)
+
     }
 
     init {
@@ -65,21 +76,33 @@ data class MyTime(
 
     operator fun times(value: Int): MyTime = MyTime(hour * value, min * value)
 
-    override fun toString(): String {
+    fun toHourTime(): MyTime = MyTime(hour, 0)
+
+    fun toHourString(): String {
         check()
-        val resMin = min.toString().run {
-            when (length) {
-                1 -> "0$this"
-                else -> this
-            }
-        }
         val resHour = hour.toString().run {
             when (length) {
                 1 -> "0$this"
                 else -> this
             }
         }
+        return "${resHour}h"
+    }
 
+    override fun toString(): String {
+        check()
+        val resHour = hour.toString().run {
+            when (length) {
+                1 -> "0$this"
+                else -> this
+            }
+        }
+        val resMin = min.toString().run {
+            when (length) {
+                1 -> "0$this"
+                else -> this
+            }
+        }
         return "${resHour}:$resMin"
     }
 }

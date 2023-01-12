@@ -18,20 +18,32 @@ class CityWeatherModel {
 
     var updateTime: String = ""
 
+    var cityName: String = "待获取城市名"
+
     fun updateWithAreaID(key: String, longitude: Double, latitude: Double): CityWeatherModel {
         val dataBody = OkHttpTools.getJsonObjectResponse(weatherURL(key, longitude, latitude))
 
         val calendar = Calendar.getInstance()
         calendar.time = Date()
         todayWeekDay = calendar.get(Calendar.DAY_OF_WEEK) - 1
-        updateTime = SimpleDateFormat("HH:mm", Locale("cn")).format(Date(System.currentTimeMillis()))
+        updateTime =
+            SimpleDateFormat("HH:mm", Locale("cn")).format(Date(System.currentTimeMillis()))
 
         try {
             weatherInfo = Gson().fromJson(dataBody, WeatherInfo::class.java)
+            val cityNameBuilder = StringBuilder()
+            var isProvinceName = true
+            for (it in weatherInfo!!.result.alert.adcodes) {
+                if (isProvinceName) isProvinceName = false
+                else cityNameBuilder.append(' ')
+                cityNameBuilder.append(it.name)
+            }
+            cityName = cityNameBuilder.toString()
         } catch (e: Exception) {
             e.printStackTrace()
             Log.e("Weather Api", "Data Package Error")
         }
+
 
         return this
     }
@@ -103,7 +115,7 @@ class CityWeatherModel {
             }
         }
 
-        fun windStrengthIndicator(speed: Double) : Int = windStrengthIndicator(speed.toInt())
+        fun windStrengthIndicator(speed: Double): Int = windStrengthIndicator(speed.toInt())
 
         fun windStrengthIndicator(speed: Int): Int = when (speed) {
             0 -> 0
@@ -114,7 +126,7 @@ class CityWeatherModel {
             in 29..38 -> 5
             in 39..49 -> 6
             in 50..61 -> 7
-            in 62..74 ->8
+            in 62..74 -> 8
             in 75..88 -> 9
             in 89..102 -> 10
             in 103..117 -> 11
@@ -127,7 +139,8 @@ class CityWeatherModel {
             else -> 99
         }
 
-        fun windDirectionIndicator(direction: Double): String = windDirectionIndicator(direction.toInt())
+        fun windDirectionIndicator(direction: Double): String =
+            windDirectionIndicator(direction.toInt())
 
         fun windDirectionIndicator(direction: Int): String = when (direction) {
             in 0..22 -> "n"
@@ -148,7 +161,7 @@ class CityWeatherModel {
                 "CLEAR_DAY", "CLEAR_NIGHT" -> sunnyMipmap
                 "PARTLY_CLOUDY_DAY", "PARTLY_CLOUDY_NIGHT", "CLOUDY", "WIND" -> cloudyMipmap
                 "FOG" -> overcastMipmap
-                "LIGHT_HAZE", "MODERATE_HAZE", "HEAVY_HAZE",  "DUST", "SAND" -> foggyMipmap
+                "LIGHT_HAZE", "MODERATE_HAZE", "HEAVY_HAZE", "DUST", "SAND" -> foggyMipmap
                 "LIGHT_RAIN", "MODERATE_RAIN" -> rainyMipmap
                 "STORM_RAIN", "HEAVY_RAIN" -> thunderMipmap
                 "LIGHT_SNOW", "MODERATE_SNOW", "HEAVY_SNOW", "STORM_SNOW" -> snowMipmap

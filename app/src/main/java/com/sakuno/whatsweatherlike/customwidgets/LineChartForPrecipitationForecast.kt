@@ -9,7 +9,7 @@ import android.util.TypedValue
 import android.view.View
 import com.sakuno.whatsweatherlike.utils.MyTime
 
-class LineChart @JvmOverloads constructor(
+class LineChartForPrecipitationForecast @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
@@ -33,9 +33,15 @@ class LineChart @JvmOverloads constructor(
     private var maxPoint = 0f
     var maxData = 0f
 
-    var lineColor = Color.BLUE
-    var lineBackgroundColor = Color.BLUE
-    var textColor = Color.BLACK
+    var systemNightMode = false
+
+    var day_mode_lineColor = Color.BLUE
+    var day_mode_lineBackgroundColor = Color.BLUE
+    var day_mode_textColor = Color.WHITE
+
+    var night_mode_lineColor = Color.BLUE
+    var night_mode_lineBackgroundColor = Color.BLUE
+    var night_mode_textColor = Color.WHITE
 
     var points = arrayOf<DataPoint>()
 
@@ -133,12 +139,11 @@ class LineChart @JvmOverloads constructor(
         widgetWidth = width.toFloat()
         widgetHeight = height.toFloat()
 
-        linePainter.color = lineColor
-
         linePath.reset()
         lineBackgroundPath.reset()
 
-        textPainter.color = textColor
+        linePainter.color = night_mode_lineColor.takeIf { systemNightMode } ?: day_mode_lineColor
+        textPainter.color = night_mode_textColor.takeIf { systemNightMode } ?: day_mode_textColor
 
         val points = pointArray()
 
@@ -146,11 +151,11 @@ class LineChart @JvmOverloads constructor(
         for (it in points) if (it.y < minY) minY = it.y
         lineBackgroundPainter.shader = LinearGradient(
             0f,
-            0f,
+            topPadding,
             0f,
             widgetHeight - bottomPadding,
-            lineBackgroundColor,
-            Color.argb(255, 255, 255, 255),
+            night_mode_lineBackgroundColor.takeIf { systemNightMode } ?: day_mode_lineBackgroundColor,
+            Color.argb(0, 255, 255, 255),
             Shader.TileMode.MIRROR
         )
 

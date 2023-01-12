@@ -3,7 +3,14 @@ package com.sakuno.whatsweatherlike
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
+import android.app.UiModeManager
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -11,12 +18,16 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import com.sakuno.whatsweatherlike.customwidgets.LineChart
+import com.sakuno.whatsweatherlike.customwidgets.LineChartForHourWeather
+import com.sakuno.whatsweatherlike.customwidgets.LineChartForPrecipitationForecast
 import com.sakuno.whatsweatherlike.utils.MyTime
+import kotlin.math.min
 
 
 class MainActivity : Activity() {
@@ -25,7 +36,9 @@ class MainActivity : Activity() {
 
     var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
 
-    var detailDialog: Dialog? = null
+    var nightMode = false
+
+    private var detailDialog: Dialog? = null
 
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
@@ -35,16 +48,27 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        window.statusBarColor = getColor(R.color.translation)
+
+        nightMode =
+            (this@MainActivity.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).nightMode == UiModeManager.MODE_NIGHT_YES
+
         findViewById<ViewPager2>(R.id.vp_cardsView).adapter = this.UserCitiesAdapter(
             arrayListOf(
-                Pair(113.1257, 22.4219), Pair(112.1257, 32.4219), Pair(113.5000, 24.3000)
+                Pair(113.1257, 22.4219), Pair(112.1257, 32.4219), Pair(113.5000, 24.3000), Pair(120.45, 29.06)
             )
         )
     }
 
-    fun showDetailInfoDialog(model: CityWeatherModel) = run { initDetailInfoDialog(model).show() }
+    fun showDetailInfoDialog(model: CityWeatherModel): Unit = initDetailInfoDialog(model).run {
+        findViewById<LinearLayout>(R.id.detail_ll_background).background = getDrawable(
+            this@MainActivity,
+            R.drawable.night_mode_half_radius_rectangle.takeIf { nightMode }
+                ?: R.drawable.day_mode_half_radius_rectangle)
+        show()
+    }
 
-    fun initDetailInfoDialog(model: CityWeatherModel): Dialog {
+    private fun initDetailInfoDialog(model: CityWeatherModel): Dialog {
 
         detailDialog = Dialog(this, R.style.dialog_bottom_full)
 
@@ -64,6 +88,36 @@ class MainActivity : Activity() {
         )
 
         if (weather != null) runOnUiThread {
+
+            view.findViewById<TextView>(R.id.detail_tv_city_title).text = model.cityName
+
+            // init hour weather forecast card
+
+            val weatherInfoList = mutableListOf<LineChartForHourWeather.ResourceInfo>()
+            val numberOfData = min(weather.hourly.skycon.size, weather.hourly.temperature.size)
+            Log.d("Hour Forecast", "numberOfData: $numberOfData")
+            for (i in 0 until numberOfData) weatherInfoList += LineChartForHourWeather.ResourceInfo(
+                MyTime.fromCaiyunDateTimeString(
+                    weather.hourly.skycon[i].datetime
+                ).toHourTime().toString(), weather.hourly.temperature[i].value.toFloat(), drawableToBitmap(
+                    getDrawable(
+                        this, CityWeatherModel.toWeatherIcon(weather.hourly.skycon[i].value)
+                    )!!
+                ), getStringResource(weather.hourly.skycon[i].value)
+            )
+
+            view.findViewById<LineChartForHourWeather>(R.id.detail_lc_hour_forecast).apply {
+                weatherInfoResourceArray = weatherInfoList.toTypedArray()
+                day_mode_lineColor = getColor(R.color.deep_green)
+                day_mode_lineBackgroundColor = getColor(R.color.light_green)
+                night_mode_lineColor = getColor(R.color.light_green)
+                night_mode_lineBackgroundColor = getColor(R.color.deep_green)
+                systemNightMode = nightMode
+                applyChanges()
+            }
+
+            // init AQI card
+
             view.findViewById<ProgressBar>(R.id.detail_pb_aqiGrade).progress =
                 weather.realtime.airQuality.aqi.chn
             view.findViewById<TextView>(R.id.detail_tv_aqiNum).text =
@@ -72,36 +126,53 @@ class MainActivity : Activity() {
                 getStringResource(CityWeatherModel.toAqiGradeStringResourceName(weather.realtime.airQuality.aqi.chn))
 
 
+            // init precipitation forecast card
+
             val dataArray = weather.minutely.precipitation2h.toDoubleArray()
             val currentTime = MyTime.fromString(model.updateTime)
             var maxPrecipitation: Float
             var startIndexes: IntArray
             var endIndexes: IntArray
             var isRaining: Boolean
-            var precipitationDesc: String
 
-            view.findViewById<LineChart>(R.id.detail_lc_realtime_precipitation).apply {
-                setDataArray(dataArray)
-                lineColor = getColor(R.color.deep_blue)
-                lineBackgroundColor = getColor(R.color.light_blue)
-                showBottomScale = true
-                bottomScaleType = LineChart.ScaleType.TIME
-                bottomScaleDisplayType = LineChart.ScaleDisplayType.START_AND_END
-                startTime = currentTime
-                stepTime = MyTime.fromMinute(1)
-                maxPrecipitation = maxData
-                startIndexes = startIndex.toIntArray()
-                endIndexes = endIndex.toIntArray()
-                isRaining = notZeroAtBeginning
-                applyChanges()
-            }
+            view.findViewById<LineChartForPrecipitationForecast>(R.id.detail_lc_realtime_precipitation)
+                .apply {
+                    setDataArray(dataArray)
+                    day_mode_lineColor = getColor(R.color.deep_blue)
+                    day_mode_lineBackgroundColor = getColor(R.color.light_blue)
+                    night_mode_lineColor = getColor(R.color.light_blue)
+                    night_mode_lineBackgroundColor = getColor(R.color.deep_blue)
+                    systemNightMode = nightMode
+
+                    showBottomScale = true
+                    bottomScaleType = LineChartForPrecipitationForecast.ScaleType.TIME
+                    bottomScaleDisplayType =
+                        LineChartForPrecipitationForecast.ScaleDisplayType.START_AND_END
+                    startTime = currentTime
+                    stepTime = MyTime.fromMinute(1)
+                    maxPrecipitation = maxData
+                    startIndexes = startIndex.toIntArray()
+                    endIndexes = endIndex.toIntArray()
+                    isRaining = notZeroAtBeginning
+                    applyChanges()
+                }
             view.findViewById<TextView>(R.id.detail_tv_max_precipitation).text =
                 if (maxPrecipitation != 0f) maxPrecipitation.toString() else ""
 
-            if (isRaining) {
+            view.findViewById<TextView>(R.id.detail_tv_precipitation_desc).text = if (isRaining) {
                 if (endIndexes.isEmpty()) {
-                    precipitationDesc = "雨将会"
+                    "雨将会持续超过两个小时"
+                } else {
+                    if (startIndexes.isEmpty()) {
+                        "雨将会在${endIndexes[0]}分钟后渐停"
+                    } else {
+                        "雨将会在${endIndexes[0]}分钟后渐停，随后${startIndexes[0] - endIndexes[0]}分钟后又开始下雨"
+                    }
                 }
+            } else if (startIndexes.isEmpty()) {
+                "两小时内不会下雨"
+            } else {
+                "${startIndexes[0]}分钟后将会有雨"
             }
         }
 
@@ -163,12 +234,8 @@ class MainActivity : Activity() {
 
                     val weather = model.weatherInfo!!.result
 
-                    val cityNameBuilder = StringBuilder()
-
-                    for (it in weather.alert.adcodes) cityNameBuilder.append(it.name)
-
                     runOnUiThread {
-                        cityNameTV.text = cityNameBuilder.toString()
+                        cityNameTV.text = model.cityName
                         updateTimeTV.text = model.updateTime
                         nowTemperTV.text = weather.realtime.temperature.toString()
                         nowAqiTV.text = weather.realtime.airQuality.aqi.chn.toString()
@@ -257,4 +324,12 @@ class MainActivity : Activity() {
             return list.size
         }
     }
+
+    fun drawableToBitmap(drawable: Drawable) = drawable.run {
+        val bitmap = Bitmap.createBitmap(intrinsicWidth, intrinsicHeight, Bitmap.Config.ARGB_8888)
+        setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+        drawable.draw(Canvas(bitmap))
+        bitmap
+    }
+
 }

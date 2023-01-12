@@ -171,9 +171,9 @@ data class Realtime(
     @SerializedName("status")
     val status: String,
     @SerializedName("temperature")
-    val temperature: Int,
+    val temperature: Double,
     @SerializedName("visibility")
-    val visibility: Int,
+    val visibility: Double,
     @SerializedName("wind")
     val wind: WindXX
 )
@@ -553,7 +553,7 @@ data class PrecipitationXX(
 
 data class WindXX(
     @SerializedName("direction")
-    val direction: Int,
+    val direction: Double,
     @SerializedName("speed")
     val speed: Double
 )

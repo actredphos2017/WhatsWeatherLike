@@ -107,6 +107,8 @@
     <string name="moderate">中</string>
     <string name="heavy">重</string>
     <string name="severe">严</string>
-
+    <string name="precipitation_forecast">降水预测</string>
+    <string name="air_quality">空气质量</string>
+    <string name="hour_forecast">小时预测</string>
 
 </resources>
