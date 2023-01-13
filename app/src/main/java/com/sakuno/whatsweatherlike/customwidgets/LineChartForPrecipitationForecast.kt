@@ -145,10 +145,6 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
         linePainter.color = night_mode_lineColor.takeIf { systemNightMode } ?: day_mode_lineColor
         textPainter.color = night_mode_textColor.takeIf { systemNightMode } ?: day_mode_textColor
 
-        val points = pointArray()
-
-        var minY: Float = widgetHeight - bottomPadding
-        for (it in points) if (it.y < minY) minY = it.y
         lineBackgroundPainter.shader = LinearGradient(
             0f,
             topPadding,
@@ -158,6 +154,9 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
             Color.argb(0, 255, 255, 255),
             Shader.TileMode.MIRROR
         )
+
+        val points = pointArray()
+
 
         Log.d("LineChart", "widgetWidth: $widgetWidth")
         Log.d("LineChart", "widgetHeight: $widgetHeight")

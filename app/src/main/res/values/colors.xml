@@ -13,11 +13,23 @@
     <color name="light_grey">#43202020</color>
     <color name="light_white">#FFFFFF</color>
     <color name="shadow_black">#9A000000</color>
-    <color name="light_green">#E1B0FF9F</color>
+    <color name="light_green">#B0FF9F</color>
     <color name="deep_green">#36B81B</color>
     <color name="deep_blue">#113CBF</color>
     <color name="light_blue">#43A1FF</color>
     <color name="moderate_grey">#7A7A7A</color>
     <color name="deep_grey">#2E2E2E</color>
     <color name="translation">#00000000</color>
+    <color name="aqi_excellent_day">#3BCF30</color>
+    <color name="aqi_great_day">#C2DF3E</color>
+    <color name="aqi_mild_day">#E8A531</color>
+    <color name="aqi_moderate_day">#ED2F2F</color>
+    <color name="aqi_heavy_day">#C50960</color>
+    <color name="aqi_severe_day">#AF3709</color>
+    <color name="aqi_excellent_night">#43873E</color>
+    <color name="aqi_great_night">#6A7829</color>
+    <color name="aqi_mild_night">#9F8049</color>
+    <color name="aqi_moderate_night">#8F2B2B</color>
+    <color name="aqi_heavy_night">#9C1051</color>
+    <color name="aqi_severe_night">#BA330A</color>
 </resources>

@@ -7,7 +7,6 @@ import android.app.UiModeManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -19,14 +18,18 @@ import android.view.WindowManager
 import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.sakuno.whatsweatherlike.customwidgets.AqiScaler
+import com.sakuno.whatsweatherlike.customwidgets.LineChartForDailyWeather
 import com.sakuno.whatsweatherlike.customwidgets.LineChartForHourWeather
 import com.sakuno.whatsweatherlike.customwidgets.LineChartForPrecipitationForecast
+import com.sakuno.whatsweatherlike.utils.AqiCalculator
 import com.sakuno.whatsweatherlike.utils.MyTime
+import java.util.*
+import kotlin.collections.ArrayList
 import kotlin.math.min
 
 
@@ -34,11 +37,10 @@ class MainActivity : Activity() {
 
     var caiyunWeatherKey = "mkhvpq9w0AsN6gjl"
 
-    var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
+//    var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
 
-    var nightMode = false
+    private var nightMode = false
 
-    private var detailDialog: Dialog? = null
 
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
@@ -55,59 +57,219 @@ class MainActivity : Activity() {
 
         findViewById<ViewPager2>(R.id.vp_cardsView).adapter = this.UserCitiesAdapter(
             arrayListOf(
-                Pair(113.1257, 22.4219), Pair(112.1257, 32.4219), Pair(113.5000, 24.3000), Pair(120.45, 29.06)
+                Pair(113.1257, 22.4219),
+                Pair(112.1257, 32.4219),
+                Pair(113.5000, 24.3000),
+                Pair(120.45, 29.06)
             )
         )
     }
 
-    fun showDetailInfoDialog(model: CityWeatherModel): Unit = initDetailInfoDialog(model).run {
-        findViewById<LinearLayout>(R.id.detail_ll_background).background = getDrawable(
-            this@MainActivity,
-            R.drawable.night_mode_half_radius_rectangle.takeIf { nightMode }
-                ?: R.drawable.day_mode_half_radius_rectangle)
-        show()
-    }
+    private fun initDetailInfo(model: CityWeatherModel, view: View) {
+        view.findViewById<LinearLayout>(R.id.detail_ll_background).background =
+            getDrawable(this@MainActivity,
+                R.drawable.night_mode_half_radius_rectangle.takeIf { nightMode }
+                    ?: R.drawable.day_mode_half_radius_rectangle)
 
-    private fun initDetailInfoDialog(model: CityWeatherModel): Dialog {
-
-        detailDialog = Dialog(this, R.style.dialog_bottom_full)
-
-        val view = View.inflate(this, R.layout.detailed_info, null)
         val weather = model.weatherInfo?.result
-
-        detailDialog!!.setCanceledOnTouchOutside(true)
-        detailDialog!!.setCancelable(true)
-
-        val window = detailDialog!!.window!!
-        window.setGravity(Gravity.BOTTOM)
-        window.setWindowAnimations(R.style.share_animation)
-
-        window.setContentView(view)
-        window.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
-        )
-
         if (weather != null) runOnUiThread {
 
             view.findViewById<TextView>(R.id.detail_tv_city_title).text = model.cityName
 
+            // init AQI card
+
+            val aqiGradeGroup = arrayOf(
+                AqiScaler.ScaleData(0f, "优") {
+                if (it) getColor(R.color.aqi_excellent_night) else getColor(R.color.aqi_excellent_day)
+            }, AqiScaler.ScaleData(
+                50f, "良"
+            ) {
+                if (it) getColor(R.color.aqi_great_night) else getColor(R.color.aqi_great_day)
+            }, AqiScaler.ScaleData(
+                100f, "轻"
+            ) {
+                if (it) getColor(R.color.aqi_mild_night) else getColor(R.color.aqi_mild_day)
+            }, AqiScaler.ScaleData(
+                150f, "中"
+            ) {
+                if (it) getColor(R.color.aqi_moderate_night) else getColor(R.color.aqi_moderate_day)
+            }, AqiScaler.ScaleData(
+                200f, "重"
+            ) {
+                if (it) getColor(R.color.aqi_heavy_night) else getColor(R.color.aqi_heavy_day)
+            }, AqiScaler.ScaleData(
+                300f, "严"
+            ) {
+                if (it) getColor(R.color.aqi_severe_night) else getColor(R.color.aqi_severe_day)
+            })
+
+            view.findViewById<AqiScaler>(R.id.detail_card_aqi).apply {
+                systemNightMode = nightMode
+                availableValue = weather.realtime.airQuality.aqi.chn.toFloat()
+                scaleGroup = aqiGradeGroup
+                applyChanges()
+            }
+
+            val iaqiMap = AqiCalculator(
+                weather.realtime.airQuality.pm25,
+                weather.realtime.airQuality.pm10,
+                weather.realtime.airQuality.o3,
+                weather.realtime.airQuality.so2,
+                weather.realtime.airQuality.no2,
+                weather.realtime.airQuality.co
+            ).toMap()
+
+            view.findViewById<TextView>(R.id.detail_tv_pm25_con).text =
+                iaqiMap[AqiCalculator.GasType.PM25]!!.second.toString().run {
+                    if (length > 4) split('.')[0]
+                    else this
+                }
+            view.findViewById<TextView>(R.id.detail_tv_pm25_iaqi).text =
+                iaqiMap[AqiCalculator.GasType.PM25]!!.third.toInt().toString()
+
+            view.findViewById<TextView>(R.id.detail_tv_o3_con).text =
+                iaqiMap[AqiCalculator.GasType.O3]!!.second.toString().run {
+                    if (length > 4) split('.')[0]
+                    else this
+                }
+            view.findViewById<TextView>(R.id.detail_tv_o3_iaqi).text =
+                iaqiMap[AqiCalculator.GasType.O3]!!.third.toInt().toString()
+
+            view.findViewById<TextView>(R.id.detail_tv_pm10_con).text =
+                iaqiMap[AqiCalculator.GasType.PM10]!!.second.toString().run {
+                    if (length > 4) split('.')[0]
+                    else this
+                }
+            view.findViewById<TextView>(R.id.detail_tv_pm10_iaqi).text =
+                iaqiMap[AqiCalculator.GasType.PM10]!!.third.toInt().toString()
+
+            view.findViewById<TextView>(R.id.detail_tv_so2_con).text =
+                iaqiMap[AqiCalculator.GasType.SO2]!!.second.toString().run {
+                    if (length > 4) split('.')[0]
+                    else this
+                }
+            view.findViewById<TextView>(R.id.detail_tv_so2_iaqi).text =
+                iaqiMap[AqiCalculator.GasType.SO2]!!.third.toInt().toString()
+
+            view.findViewById<TextView>(R.id.detail_tv_no2_con).text =
+                iaqiMap[AqiCalculator.GasType.NO2]!!.second.toString().run {
+                    if (length > 4) split('.')[0]
+                    else this
+                }
+            view.findViewById<TextView>(R.id.detail_tv_no2_iaqi).text =
+                iaqiMap[AqiCalculator.GasType.NO2]!!.third.toInt().toString()
+
+            view.findViewById<TextView>(R.id.detail_tv_co_con).text =
+                iaqiMap[AqiCalculator.GasType.CO]!!.second.toString().run {
+                    if (length > 4) split('.')[0]
+                    else this
+                }
+            view.findViewById<TextView>(R.id.detail_tv_co_iaqi).text =
+                iaqiMap[AqiCalculator.GasType.CO]!!.third.toInt().toString()
+
+            if (iaqiMap[AqiCalculator.GasType.PM25]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_pm25_background).background =
+                getDrawable(this, R.color.light_green)
+            if (iaqiMap[AqiCalculator.GasType.PM10]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_pm10_background).background =
+                getDrawable(this, R.color.light_green)
+            if (iaqiMap[AqiCalculator.GasType.O3]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_o3_background).background =
+                getDrawable(this, R.color.light_green)
+            if (iaqiMap[AqiCalculator.GasType.SO2]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_so2_background).background =
+                getDrawable(this, R.color.light_green)
+            if (iaqiMap[AqiCalculator.GasType.NO2]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_no2_background).background =
+                getDrawable(this, R.color.light_green)
+            if (iaqiMap[AqiCalculator.GasType.CO]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_co_background).background =
+                getDrawable(this, R.color.light_green)
+
+            // init daily weather forecast card
+
+            val dailyWeatherInfoList = mutableListOf<LineChartForDailyWeather.ResourceInfo>()
+
+            val numberOfDailyWeatherData = arrayOf(
+                weather.daily.temperature.size,
+                weather.daily.skycon08h20h.size,
+                weather.daily.skycon20h32h.size
+            ).min()
+
+            Log.d("Daily Forecast", "numberOfData: $numberOfDailyWeatherData")
+
+            for (i in 0 until numberOfDailyWeatherData) {
+
+                val cal = Calendar.getInstance()
+                val dateName: String
+                val isToday: (Calendar) -> Boolean = {
+                    val today = Calendar.getInstance()
+                    it.get(Calendar.YEAR) == today.get(Calendar.YEAR) && it.get(Calendar.MONTH) == today.get(
+                        Calendar.MONTH
+                    ) && it.get(Calendar.DAY_OF_MONTH) == today.get(Calendar.DAY_OF_MONTH)
+                }
+
+                MyTime.MyDateTimeAuxiliary.fromCaiyunDatetimeString(weather.daily.temperature[i].date)
+                    .run {
+                        cal.set(year, month - 1, day)
+                        dateName = toDateString()
+                    }
+
+                dailyWeatherInfoList += LineChartForDailyWeather.ResourceInfo(
+                    dayOfWeek = if (isToday(cal)) "今天" else getStringResource(
+                        "dayOfWeek${
+                            cal.get(
+                                Calendar.DAY_OF_WEEK
+                            ) - 1
+                        }"
+                    ),
+                    dayOfMonth = dateName,
+                    skyCondition_08_20 = getStringResource(weather.daily.skycon08h20h[i].value),
+                    skyCondition_20_32 = getStringResource(weather.daily.skycon20h32h[i].value),
+                    weatherBitmap_08_20 = drawableToBitmap(
+                        getDrawable(
+                            this,
+                            CityWeatherModel.toWeatherIcon(weather.daily.skycon08h20h[i].value)
+                        )!!
+                    ),
+                    weatherBitmap_20_32 = drawableToBitmap(
+                        getDrawable(
+                            this,
+                            CityWeatherModel.toWeatherIcon(weather.daily.skycon20h32h[i].value)
+                        )!!
+                    ),
+                    maxTemperature = weather.daily.temperature[i].max.toFloat(),
+                    minTemperature = weather.daily.temperature[i].min.toFloat()
+                )
+            }
+
+            view.findViewById<LineChartForDailyWeather>(R.id.detail_lc_daily_weather_forecast)
+                .apply {
+                    weatherInfoResourceArray = dailyWeatherInfoList.toTypedArray()
+                    day_mode_lineColor = getColor(R.color.deep_green)
+                    day_mode_lineBackgroundColor = getColor(R.color.light_green)
+                    night_mode_lineColor = getColor(R.color.light_green)
+                    night_mode_lineBackgroundColor = getColor(R.color.deep_green)
+                    systemNightMode = nightMode
+                    applyChanges()
+                }
+
+
             // init hour weather forecast card
 
-            val weatherInfoList = mutableListOf<LineChartForHourWeather.ResourceInfo>()
-            val numberOfData = min(weather.hourly.skycon.size, weather.hourly.temperature.size)
-            Log.d("Hour Forecast", "numberOfData: $numberOfData")
-            for (i in 0 until numberOfData) weatherInfoList += LineChartForHourWeather.ResourceInfo(
+            val hourlyWeatherInfoList = mutableListOf<LineChartForHourWeather.ResourceInfo>()
+            val numberOfHourlyWeatherData =
+                min(weather.hourly.skycon.size, weather.hourly.temperature.size)
+            Log.d("Hour Forecast", "numberOfData: $numberOfHourlyWeatherData")
+            for (i in 0 until numberOfHourlyWeatherData) hourlyWeatherInfoList += LineChartForHourWeather.ResourceInfo(
                 MyTime.fromCaiyunDateTimeString(
                     weather.hourly.skycon[i].datetime
-                ).toHourTime().toString(), weather.hourly.temperature[i].value.toFloat(), drawableToBitmap(
+                ).toHourTime().toString(),
+                weather.hourly.temperature[i].value.toFloat(),
+                drawableToBitmap(
                     getDrawable(
                         this, CityWeatherModel.toWeatherIcon(weather.hourly.skycon[i].value)
                     )!!
-                ), getStringResource(weather.hourly.skycon[i].value)
+                ),
+                getStringResource(weather.hourly.skycon[i].value)
             )
 
             view.findViewById<LineChartForHourWeather>(R.id.detail_lc_hour_forecast).apply {
-                weatherInfoResourceArray = weatherInfoList.toTypedArray()
+                weatherInfoResourceArray = hourlyWeatherInfoList.toTypedArray()
                 day_mode_lineColor = getColor(R.color.deep_green)
                 day_mode_lineBackgroundColor = getColor(R.color.light_green)
                 night_mode_lineColor = getColor(R.color.light_green)
@@ -115,15 +277,6 @@ class MainActivity : Activity() {
                 systemNightMode = nightMode
                 applyChanges()
             }
-
-            // init AQI card
-
-            view.findViewById<ProgressBar>(R.id.detail_pb_aqiGrade).progress =
-                weather.realtime.airQuality.aqi.chn
-            view.findViewById<TextView>(R.id.detail_tv_aqiNum).text =
-                weather.realtime.airQuality.aqi.chn.toString()
-            view.findViewById<TextView>(R.id.detail_tv_aqiGrade).text =
-                getStringResource(CityWeatherModel.toAqiGradeStringResourceName(weather.realtime.airQuality.aqi.chn))
 
 
             // init precipitation forecast card
@@ -175,16 +328,15 @@ class MainActivity : Activity() {
                 "${startIndexes[0]}分钟后将会有雨"
             }
         }
-
-        return detailDialog!!
     }
 
     inner class UserCitiesAdapter(
         private var list: ArrayList<Pair<Double, Double>>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
-
         inner class UserCitiesViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+
+            private var detailDialog: Dialog? = null
 
             private val cityNameTV: TextView = view.findViewById(R.id.tv_cityTitle)
 
@@ -299,12 +451,46 @@ class MainActivity : Activity() {
                             )
                         )
 
-                        detailBtn.setOnClickListener {
-                            showDetailInfoDialog(model)
+                        if (initDetailDialog(model)) {
+                            detailBtn.setOnClickListener {
+                                detailDialog?.show()
+                            }
                         }
-
                     }
+
+
                 }.start()
+            }
+
+            fun initDetailDialog(model: CityWeatherModel): Boolean {
+
+                var available = true
+
+                detailDialog = Dialog(this@MainActivity, R.style.dialog_bottom_full)
+
+                val view = View.inflate(this@MainActivity, R.layout.detailed_info, null)
+
+                try {
+                    initDetailInfo(model, view)
+                } catch (_: Exception) {
+                    available = false
+                }
+
+
+                detailDialog!!.setCanceledOnTouchOutside(true)
+                detailDialog!!.setCancelable(true)
+
+                val window = detailDialog!!.window!!
+                window.setGravity(Gravity.BOTTOM)
+                window.setWindowAnimations(R.style.share_animation)
+
+                window.setContentView(view)
+                window.setLayout(
+                    WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
+                )
+
+                return available
+
             }
         }
 
@@ -325,7 +511,7 @@ class MainActivity : Activity() {
         }
     }
 
-    fun drawableToBitmap(drawable: Drawable) = drawable.run {
+    private fun drawableToBitmap(drawable: Drawable): Bitmap = drawable.run {
         val bitmap = Bitmap.createBitmap(intrinsicWidth, intrinsicHeight, Bitmap.Config.ARGB_8888)
         setBounds(0, 0, intrinsicWidth, intrinsicHeight)
         drawable.draw(Canvas(bitmap))

@@ -28,13 +28,30 @@ data class MyTime(
 
         // "2023-01-11T18:00+08:00"
 
-        fun fromCaiyunDateTimeString(datetime: String): MyTime = datetime
-            .split('T', '+')
-            .getOrElse(1) { "" }
-            .split(':')
-            .takeIf { it.size == 2 }
-            ?.run { MyTime(get(0).toIntOrNull() ?: 0, get(1).toIntOrNull() ?: 0) }
-            ?:MyTime(0, 0)
+        fun fromCaiyunDateTimeString(datetime: String): MyTime =
+            datetime.split('T', '+').getOrElse(1) { "" }.split(':').takeIf { it.size == 2 }
+                ?.run { MyTime(get(0).toIntOrNull() ?: 0, get(1).toIntOrNull() ?: 0) } ?: MyTime(
+                0, 0
+            )
+
+    }
+
+    data class MyDateTimeAuxiliary(
+        var year: Int, var month: Int, var day: Int, var time: MyTime
+    ) {
+        companion object {
+            fun fromCaiyunDatetimeString(datetime: String): MyDateTimeAuxiliary =
+                datetime.split('T', '+').run {
+                    val dateRes = get(0).split('-')
+                    MyDateTimeAuxiliary(
+                        dateRes.getOrNull(0)?.toIntOrNull() ?: 2000,
+                        dateRes.getOrNull(1)?.toIntOrNull() ?: 1,
+                        dateRes.getOrNull(2)?.toIntOrNull() ?: 1,
+                        fromString(getOrNull(1) ?: "0:0")
+                    )
+                }
+        }
+        fun toDateString() = "${month}月${day}日"
 
     }
 

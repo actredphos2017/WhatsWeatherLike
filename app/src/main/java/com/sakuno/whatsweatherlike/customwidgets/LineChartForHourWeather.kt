@@ -23,21 +23,18 @@ class LineChartForHourWeather @JvmOverloads constructor(
     var ringEdgeWidth = dp2px(1.8f)
 
     private val linePainter = Paint()
-    private var linePath = Path()
-
     private val lineBackgroundPainter = Paint()
-    private val lineBackgroundPath = Path()
-
     private val dottedLinePainter = Paint()
-
     private val mipmapPainter = Paint()
-
     private val ringPointEdgePainter = Paint()
     private val ringPointFullPainter = Paint()
-
     private val textPainter = Paint()
     private val longTextPainter = Paint()
     private val timeTextPainter = Paint()
+    private val temperaturePainter = Paint()
+
+    private var linePath = Path()
+    private val lineBackgroundPath = Path()
 
     var widgetWidth = 0f
     var widgetHeight = 0f
@@ -131,6 +128,12 @@ class LineChartForHourWeather @JvmOverloads constructor(
         timeTextPainter.apply {
             textSize = dp2px(14f)
             isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+
+        temperaturePainter.apply {
+            textSize = dp2px(14f)
+            isAntiAlias = true
         }
 
         ringPointEdgePainter.apply {
@@ -158,6 +161,7 @@ class LineChartForHourWeather @JvmOverloads constructor(
             textPainter.color = night_mode_textColor
             longTextPainter.color = night_mode_textColor
             timeTextPainter.color = night_mode_textColor
+            temperaturePainter.color = night_mode_textColor
             ringPointFullPainter.color = night_mode_ringCenterColor
         } else {
             linePainter.color = day_mode_lineColor
@@ -166,17 +170,10 @@ class LineChartForHourWeather @JvmOverloads constructor(
             textPainter.color = day_mode_textColor
             longTextPainter.color = day_mode_textColor
             timeTextPainter.color = day_mode_textColor
+            temperaturePainter.color = day_mode_textColor
             ringPointFullPainter.color = day_mode_ringCenterColor
         }
 
-        linePath.reset()
-        lineBackgroundPath.reset()
-
-
-        val points = pointArray()
-
-        var minY: Float = widgetHeight - bottomPadding
-        for (it in points) if (it.y < minY) minY = it.y
         lineBackgroundPainter.shader = LinearGradient(
             0f,
             topPadding,
@@ -186,6 +183,11 @@ class LineChartForHourWeather @JvmOverloads constructor(
                 ?: night_mode_lineBackgroundColor,
             Color.argb(0, 255, 255, 255),
             Shader.TileMode.MIRROR)
+
+        linePath.reset()
+        lineBackgroundPath.reset()
+
+        val points = pointArray()
 
         Log.d("LineChart", "widgetWidth: $widgetWidth")
         Log.d("LineChart", "widgetHeight: $widgetHeight")
@@ -203,7 +205,7 @@ class LineChartForHourWeather @JvmOverloads constructor(
         }
 
         lineBackgroundPath.apply {
-            lineTo(widgetWidth - startPadding, widgetHeight - bottomPadding)
+            lineTo(widgetWidth - endPadding, widgetHeight - bottomPadding)
             lineTo(startPadding, widgetHeight - bottomPadding)
             close()
         }
@@ -249,12 +251,12 @@ class LineChartForHourWeather @JvmOverloads constructor(
                 temperatureTextPath,
                 dp2px(10f),
                 dp2px(-4f),
-                timeTextPainter
+                temperaturePainter
             )
 
             canvas.drawText(
                 weatherInfoResourceArray[i].hourTime,
-                it.x + dp2px(-17f),
+                it.x,
                 it.y + dp2px(20f),
                 timeTextPainter
             )

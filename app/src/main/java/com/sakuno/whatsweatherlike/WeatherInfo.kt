@@ -220,7 +220,7 @@ data class Dswrf(
     @SerializedName("max")
     val max: Double,
     @SerializedName("min")
-    val min: Int
+    val min: Double
 )
 
 data class Humidity(
@@ -526,15 +526,15 @@ data class AirQualityXX(
     @SerializedName("description")
     val description: Description,
     @SerializedName("no2")
-    val no2: Int,
+    val no2: Double,
     @SerializedName("o3")
-    val o3: Int,
+    val o3: Double,
     @SerializedName("pm10")
-    val pm10: Int,
+    val pm10: Double,
     @SerializedName("pm25")
-    val pm25: Int,
+    val pm25: Double,
     @SerializedName("so2")
-    val so2: Int
+    val so2: Double
 )
 
 data class LifeIndexX(

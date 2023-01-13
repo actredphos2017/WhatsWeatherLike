@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">WhatsWeatherLike</string>
-    <string name="locating">定位中</string>
+    <string name="locating">正在获取</string>
     <string name="today">今天</string>
     <string name="tomorrow">明天</string>
 
@@ -107,8 +107,17 @@
     <string name="moderate">中</string>
     <string name="heavy">重</string>
     <string name="severe">严</string>
+
     <string name="precipitation_forecast">降水预测</string>
     <string name="air_quality">空气质量</string>
     <string name="hour_forecast">小时预测</string>
+    <string name="PM25">小于2.5微米\n颗粒物</string>
+    <string name="concentration">浓度</string>
+    <string name="iaqi">IAQI</string>
+    <string name="PM10">小于10微米\n颗粒物</string>
+    <string name="SO2">二氧化硫</string>
+    <string name="NO2">二氧化氮</string>
+    <string name="O3">臭氧</string>
+    <string name="CO">一氧化氮</string>
 
 </resources>

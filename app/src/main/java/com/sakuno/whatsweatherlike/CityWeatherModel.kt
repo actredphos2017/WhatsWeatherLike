@@ -5,11 +5,12 @@ import com.google.gson.Gson
 import com.sakuno.whatsweatherlike.utils.OkHttpTools
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.roundToInt
 
 class CityWeatherModel {
 
     fun weatherURL(key: String, longitude: Double, latitude: Double): String {
-        return "https://api.caiyunapp.com/v2.6/${key}/${longitude},${latitude}/weather?alert=true&dailysteps=3&hourlysteps=24"
+        return "https://api.caiyunapp.com/v2.6/${key}/${longitude},${latitude}/weather?alert=true&dailysteps=15&hourlysteps=24"
     }
 
     var weatherInfo: WeatherInfo? = null
@@ -140,7 +141,7 @@ class CityWeatherModel {
         }
 
         fun windDirectionIndicator(direction: Double): String =
-            windDirectionIndicator(direction.toInt())
+            windDirectionIndicator(direction.roundToInt())
 
         fun windDirectionIndicator(direction: Int): String = when (direction) {
             in 0..22 -> "n"
@@ -154,7 +155,6 @@ class CityWeatherModel {
             in 338..360 -> "n"
             else -> "null"
         }
-
 
         val toWeatherBackground: (String) -> ((Int) -> Int) = {
             when (it) {
