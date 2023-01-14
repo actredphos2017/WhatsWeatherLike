@@ -10,13 +10,53 @@
     android:gravity="center"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/detail_tv_city_title"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:text="@string/getting"
-        android:textSize="28sp" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/detail_ib_back"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="start"
+            android:layout_marginStart="20dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_back"
+            android:background="@color/translation"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="@string/back" />
+
+        <TextView
+            android:id="@+id/detail_tv_city_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/getting"
+            android:textSize="28sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/detail_ib_collection"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="start"
+            android:layout_marginEnd="20dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/star"
+            android:background="@color/translation"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="@string/back" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <View
         android:layout_width="match_parent"
@@ -40,798 +80,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp" />
 
+            <!-- Hourly Forecast -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                app:cardCornerRadius="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="top|center"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
-                        android:gravity="start|center_vertical"
-                        android:orientation="horizontal"
-                        tools:ignore="UseCompoundDrawables">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/icon_aqi"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="4dp"
-                            android:text="@string/air_quality"
-                            android:textSize="20sp" />
-
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1.5dp"
-                        android:layout_marginTop="10dp"
-                        android:background="@color/light_grey" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="300dp"
-                        android:gravity="start|center"
-                        android:orientation="horizontal">
-
-                        <androidx.cardview.widget.CardView
-                            android:layout_width="80dp"
-                            android:layout_height="match_parent"
-                            android:layout_marginTop="14dp"
-                            android:layout_marginBottom="14dp"
-                            android:layout_marginStart="10dp"
-                            app:cardCornerRadius="12dp">
-
-                            <androidx.constraintlayout.widget.ConstraintLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent">
-
-                                <com.sakuno.whatsweatherlike.customwidgets.AqiScaler
-                                    android:id="@+id/detail_card_aqi"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent" />
-
-
-
-                            </androidx.constraintlayout.widget.ConstraintLayout>
-
-                        </androidx.cardview.widget.CardView>
-
-                        <GridLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:columnCount="2"
-                            android:gravity="center"
-                            android:orientation="vertical"
-                            android:padding="10dp"
-                            android:rowCount="3">
-
-                            <androidx.cardview.widget.CardView
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:layout_rowWeight="1"
-                                android:layout_columnWeight="1"
-                                android:layout_margin="5dp"
-                                app:cardCornerRadius="12dp">
-
-                                <LinearLayout
-                                    android:id="@+id/detail_card_pm25_background"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="top|center"
-                                    android:orientation="vertical"
-                                    android:padding="8dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:orientation="horizontal"
-                                        tools:ignore="TooDeepLayout,UseCompoundDrawables">
-
-                                        <ImageView
-                                            android:layout_width="24dp"
-                                            android:layout_height="24dp"
-                                            android:src="@drawable/logo_pm25"
-                                            tools:ignore="ContentDescription" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="5dp"
-                                            android:text="@string/PM25"
-                                            android:textAlignment="textStart"
-                                            android:textSize="8dp"
-                                            tools:ignore="SpUsage" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginTop="4dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingEnd="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/concentration"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_pm25_con"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                        <View
-                                            android:layout_width="0.5dp"
-                                            android:layout_height="match_parent"
-                                            android:background="@color/light_grey" />
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingStart="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/iaqi"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_pm25_iaqi"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </androidx.cardview.widget.CardView>
-
-                            <androidx.cardview.widget.CardView
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:layout_rowWeight="1"
-                                android:layout_columnWeight="1"
-                                android:layout_margin="5dp"
-                                app:cardCornerRadius="12dp">
-
-                                <LinearLayout
-                                    android:id="@+id/detail_card_so2_background"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="top|center"
-                                    android:orientation="vertical"
-                                    android:padding="8dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:orientation="horizontal"
-                                        tools:ignore="TooDeepLayout,UseCompoundDrawables">
-
-                                        <ImageView
-                                            android:layout_width="24dp"
-                                            android:layout_height="24dp"
-                                            android:src="@drawable/logo_so2"
-                                            tools:ignore="ContentDescription" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="5dp"
-                                            android:text="@string/SO2"
-                                            android:textAlignment="textStart"
-                                            android:textSize="8dp"
-                                            tools:ignore="SpUsage" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginTop="4dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingEnd="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/concentration"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_so2_con"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                        <View
-                                            android:layout_width="0.5dp"
-                                            android:layout_height="match_parent"
-                                            android:background="@color/light_grey" />
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingStart="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/iaqi"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_so2_iaqi"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </androidx.cardview.widget.CardView>
-
-                            <androidx.cardview.widget.CardView
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:layout_rowWeight="1"
-                                android:layout_columnWeight="1"
-                                android:layout_margin="5dp"
-                                app:cardCornerRadius="12dp">
-
-                                <LinearLayout
-                                    android:id="@+id/detail_card_o3_background"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="top|center"
-                                    android:orientation="vertical"
-                                    android:padding="8dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:orientation="horizontal"
-                                        tools:ignore="TooDeepLayout,UseCompoundDrawables">
-
-                                        <ImageView
-                                            android:layout_width="24dp"
-                                            android:layout_height="24dp"
-                                            android:src="@drawable/logo_o3"
-                                            tools:ignore="ContentDescription" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="5dp"
-                                            android:text="@string/O3"
-                                            android:textAlignment="textStart"
-                                            android:textSize="8dp"
-                                            tools:ignore="SpUsage" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginTop="4dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingEnd="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/concentration"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_o3_con"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                        <View
-                                            android:layout_width="0.5dp"
-                                            android:layout_height="match_parent"
-                                            android:background="@color/light_grey" />
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingStart="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/iaqi"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_o3_iaqi"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </androidx.cardview.widget.CardView>
-
-                            <androidx.cardview.widget.CardView
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:layout_rowWeight="1"
-                                android:layout_columnWeight="1"
-                                android:layout_margin="5dp"
-                                app:cardCornerRadius="12dp">
-
-                                <LinearLayout
-                                    android:id="@+id/detail_card_pm10_background"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="top|center"
-                                    android:orientation="vertical"
-                                    android:padding="8dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:orientation="horizontal"
-                                        tools:ignore="TooDeepLayout,UseCompoundDrawables">
-
-                                        <ImageView
-                                            android:layout_width="24dp"
-                                            android:layout_height="24dp"
-                                            android:src="@drawable/logo_pm10"
-                                            tools:ignore="ContentDescription" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="5dp"
-                                            android:text="@string/PM10"
-                                            android:textAlignment="textStart"
-                                            android:textSize="8dp"
-                                            tools:ignore="SpUsage" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginTop="4dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingEnd="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/concentration"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_pm10_con"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                        <View
-                                            android:layout_width="0.5dp"
-                                            android:layout_height="match_parent"
-                                            android:background="@color/light_grey" />
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingStart="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/iaqi"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_pm10_iaqi"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </androidx.cardview.widget.CardView>
-
-                            <androidx.cardview.widget.CardView
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:layout_rowWeight="1"
-                                android:layout_columnWeight="1"
-                                android:layout_margin="5dp"
-                                app:cardCornerRadius="12dp">
-
-                                <LinearLayout
-                                    android:id="@+id/detail_card_no2_background"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="top|center"
-                                    android:orientation="vertical"
-                                    android:padding="8dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:orientation="horizontal"
-                                        tools:ignore="TooDeepLayout,UseCompoundDrawables">
-
-                                        <ImageView
-                                            android:layout_width="24dp"
-                                            android:layout_height="24dp"
-                                            android:src="@drawable/logo_no2"
-                                            tools:ignore="ContentDescription" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="5dp"
-                                            android:text="@string/NO2"
-                                            android:textAlignment="textStart"
-                                            android:textSize="8dp"
-                                            tools:ignore="SpUsage" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginTop="4dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingEnd="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/concentration"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_no2_con"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                        <View
-                                            android:layout_width="0.5dp"
-                                            android:layout_height="match_parent"
-                                            android:background="@color/light_grey" />
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingStart="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/iaqi"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_no2_iaqi"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </androidx.cardview.widget.CardView>
-
-                            <androidx.cardview.widget.CardView
-                                android:layout_width="0dp"
-                                android:layout_height="0dp"
-                                android:layout_rowWeight="1"
-                                android:layout_columnWeight="1"
-                                android:layout_margin="5dp"
-                                app:cardCornerRadius="12dp">
-
-                                <LinearLayout
-                                    android:id="@+id/detail_card_co_background"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="top|center"
-                                    android:orientation="vertical"
-                                    android:padding="8dp">
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="wrap_content"
-                                        android:gravity="center"
-                                        android:orientation="horizontal"
-                                        tools:ignore="TooDeepLayout,UseCompoundDrawables">
-
-                                        <ImageView
-                                            android:layout_width="24dp"
-                                            android:layout_height="24dp"
-                                            android:src="@drawable/logo_co"
-                                            tools:ignore="ContentDescription" />
-
-                                        <TextView
-                                            android:layout_width="match_parent"
-                                            android:layout_height="wrap_content"
-                                            android:layout_marginStart="5dp"
-                                            android:text="@string/CO"
-                                            android:textAlignment="textStart"
-                                            android:textSize="8dp"
-                                            tools:ignore="SpUsage" />
-
-                                    </LinearLayout>
-
-                                    <LinearLayout
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"
-                                        android:layout_marginTop="4dp"
-                                        android:gravity="center"
-                                        android:orientation="horizontal">
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingEnd="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/concentration"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_co_con"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                        <View
-                                            android:layout_width="0.5dp"
-                                            android:layout_height="match_parent"
-                                            android:background="@color/light_grey" />
-
-                                        <LinearLayout
-                                            android:layout_width="wrap_content"
-                                            android:layout_height="match_parent"
-                                            android:gravity="start|center"
-                                            android:orientation="vertical"
-                                            android:paddingStart="12dp"
-                                            tools:ignore="RtlSymmetry">
-
-                                            <TextView
-                                                android:layout_width="wrap_content"
-                                                android:layout_height="wrap_content"
-                                                android:text="@string/iaqi"
-                                                android:textSize="10dp"
-                                                tools:ignore="SpUsage" />
-
-                                            <TextView
-                                                android:id="@+id/detail_tv_co_iaqi"
-                                                android:layout_width="30dp"
-                                                android:layout_height="wrap_content"
-                                                android:text=""
-                                                tools:ignore="HardcodedText" />
-
-                                        </LinearLayout>
-
-                                    </LinearLayout>
-
-                                </LinearLayout>
-
-                            </androidx.cardview.widget.CardView>
-
-                        </GridLayout>
-
-                    </LinearLayout>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
-                app:cardCornerRadius="12dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="400dp"
-                    android:gravity="top|center"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginTop="8dp"
-                        android:gravity="start|center_vertical"
-                        android:orientation="horizontal"
-                        tools:ignore="UseCompoundDrawables">
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/icon_weather"
-                            tools:ignore="ContentDescription" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="4dp"
-                            android:text="每日预测"
-                            android:textSize="20sp" />
-
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1.5dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@color/light_grey" />
-
-                    <HorizontalScrollView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_marginTop="8dp">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="match_parent">
-
-                            <com.sakuno.whatsweatherlike.customwidgets.LineChartForDailyWeather
-                                android:id="@+id/detail_lc_daily_weather_forecast"
-                                android:layout_width="1500sp"
-                                android:layout_height="match_parent" />
-
-                        </LinearLayout>
-
-                    </HorizontalScrollView>
-
-                </LinearLayout>
-
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="16dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="8dp"
                 app:cardCornerRadius="12dp">
 
                 <LinearLayout
@@ -892,10 +146,78 @@
 
             </androidx.cardview.widget.CardView>
 
+            <!-- Daily Forecast -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="8dp"
+                app:cardCornerRadius="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="400dp"
+                    android:gravity="top|center"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:gravity="start|center_vertical"
+                        android:orientation="horizontal"
+                        tools:ignore="UseCompoundDrawables">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/icon_weather"
+                            tools:ignore="ContentDescription" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="@string/daily_forecast"
+                            android:textSize="20sp" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1.5dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@color/light_grey" />
+
+                    <HorizontalScrollView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginTop="8dp">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent">
+
+                            <com.sakuno.whatsweatherlike.customwidgets.LineChartForDailyWeather
+                                android:id="@+id/detail_lc_daily_weather_forecast"
+                                android:layout_width="1500sp"
+                                android:layout_height="match_parent" />
+
+                        </LinearLayout>
+
+                    </HorizontalScrollView>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Precipitation Forecast -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginVertical="8dp"
                 app:cardCornerRadius="12dp">
 
                 <LinearLayout
@@ -1024,6 +346,260 @@
 
             </androidx.cardview.widget.CardView>
 
+            <!-- AQI -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="top|center"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="8dp"
+                        android:gravity="start|center_vertical"
+                        android:orientation="horizontal"
+                        tools:ignore="UseCompoundDrawables">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/icon_aqi"
+                            tools:ignore="ContentDescription" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="@string/air_quality"
+                            android:textSize="20sp" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1.5dp"
+                        android:layout_marginTop="10dp"
+                        android:background="@color/light_grey" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="300dp"
+                        android:gravity="start|center"
+                        android:orientation="horizontal">
+
+                        <androidx.cardview.widget.CardView
+                            android:layout_width="80dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginTop="14dp"
+                            android:layout_marginBottom="14dp"
+                            android:layout_marginStart="10dp"
+                            app:cardCornerRadius="12dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:textAlignment="center"
+                                    android:paddingTop="8dp"
+                                    android:textSize="12sp"
+                                    android:text="@string/AQI"/>
+
+                                <com.sakuno.whatsweatherlike.customwidgets.AqiScaler
+                                    android:id="@+id/detail_card_aqi"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_marginTop="8dp"/>
+
+                            </LinearLayout>
+
+                        </androidx.cardview.widget.CardView>
+
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="10dp"
+                            android:columnCount="2"
+                            android:rowCount="3">
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_rowWeight="1"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="5dp"
+                                app:cardCornerRadius="12dp">
+
+                                <com.sakuno.whatsweatherlike.customwidgets.IaqiCard
+                                    android:id="@+id/detail_ic_pm25"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_rowWeight="1"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="5dp"
+                                app:cardCornerRadius="12dp">
+
+                                <com.sakuno.whatsweatherlike.customwidgets.IaqiCard
+                                    android:id="@+id/detail_ic_o3"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_rowWeight="1"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="5dp"
+                                app:cardCornerRadius="12dp">
+
+                                <com.sakuno.whatsweatherlike.customwidgets.IaqiCard
+                                    android:id="@+id/detail_ic_no2"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_rowWeight="1"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="5dp"
+                                app:cardCornerRadius="12dp">
+
+                                <com.sakuno.whatsweatherlike.customwidgets.IaqiCard
+                                    android:id="@+id/detail_ic_pm10"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_rowWeight="1"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="5dp"
+                                app:cardCornerRadius="12dp">
+
+                                <com.sakuno.whatsweatherlike.customwidgets.IaqiCard
+                                    android:id="@+id/detail_ic_so2"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+
+                            </androidx.cardview.widget.CardView>
+
+                            <androidx.cardview.widget.CardView
+                                android:layout_width="0dp"
+                                android:layout_height="0dp"
+                                android:layout_rowWeight="1"
+                                android:layout_columnWeight="1"
+                                android:layout_margin="5dp"
+                                app:cardCornerRadius="12dp">
+
+                                <com.sakuno.whatsweatherlike.customwidgets.IaqiCard
+                                    android:id="@+id/detail_ic_co"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent" />
+
+                            </androidx.cardview.widget.CardView>
+
+                        </GridLayout>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:columnCount="2"
+                android:rowCount="1"
+                android:layout_height="200dp"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_columnWeight="1"
+                    android:layout_rowWeight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp">
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_columnWeight="1"
+                    android:layout_rowWeight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp">
+
+                </androidx.cardview.widget.CardView>
+
+            </GridLayout>
+
+            <GridLayout
+                android:layout_width="match_parent"
+                android:columnCount="2"
+                android:rowCount="1"
+                android:layout_height="200dp"
+                android:orientation="horizontal">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_columnWeight="1"
+                    android:layout_rowWeight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp">
+
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_columnWeight="1"
+                    android:layout_rowWeight="1"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="12dp">
+
+                </androidx.cardview.widget.CardView>
+
+            </GridLayout>
 
         </LinearLayout>
 

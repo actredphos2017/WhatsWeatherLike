@@ -32,4 +32,6 @@
     <color name="aqi_moderate_night">#8F2B2B</color>
     <color name="aqi_heavy_night">#9C1051</color>
     <color name="aqi_severe_night">#BA330A</color>
+    <color name="iaqi_main_bg_night">#404533</color>
+    <color name="iaqi_main_bg_day">#E2FF96</color>
 </resources>

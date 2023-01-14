@@ -2,9 +2,13 @@ package com.sakuno.whatsweatherlike
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.Dialog
 import android.app.UiModeManager
 import android.content.Context
+import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.content.pm.PermissionInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
@@ -16,22 +20,25 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import com.sakuno.whatsweatherlike.customwidgets.AqiScaler
-import com.sakuno.whatsweatherlike.customwidgets.LineChartForDailyWeather
-import com.sakuno.whatsweatherlike.customwidgets.LineChartForHourWeather
-import com.sakuno.whatsweatherlike.customwidgets.LineChartForPrecipitationForecast
+import com.baidu.location.LocationClient
+import com.google.gson.Gson
+import com.sakuno.whatsweatherlike.customwidgets.*
 import com.sakuno.whatsweatherlike.utils.AqiCalculator
 import com.sakuno.whatsweatherlike.utils.MyTime
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.math.min
-
 
 class MainActivity : Activity() {
 
@@ -39,30 +46,213 @@ class MainActivity : Activity() {
 
 //    var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
 
+    private var locationClient: LocationClient? = null
+
     private var nightMode = false
 
+    private var addCityDialog: Dialog? = null
 
-    fun getStringResource(imageName: String): String =
-        resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
-            ?.run(::getString) ?: ""
+    private var weatherInfoPreferences: SharedPreferences? = null
+
+    private var citiesPreferences: SharedPreferences? = null
+
+    private var cityList: Cities? = null
+
+    private var mainCardView: ViewPager2? = null
+
+    private var citiesFromPreferences: Cities
+        get() = Gson().fromJson(
+            citiesPreferences!!.getString("cities", "") ?: "", Cities::class.java
+        ) ?: Cities(listOf())
+        set(value) {
+            val editor = citiesPreferences?.edit()
+            editor?.putString("cities", Gson().toJson(value, Cities::class.java))
+            editor?.apply()
+        }
+
+    private val permissionRequestCode = 1000
+
+    private val permissionList = listOf(
+        android.Manifest.permission.ACCESS_COARSE_LOCATION,
+        android.Manifest.permission.ACCESS_FINE_LOCATION,
+        android.Manifest.permission.ACCESS_WIFI_STATE,
+        android.Manifest.permission.ACCESS_NETWORK_STATE,
+        android.Manifest.permission.CHANGE_WIFI_STATE,
+        android.Manifest.permission.INTERNET
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        checkAndGetPermissions()
 
         window.statusBarColor = getColor(R.color.translation)
 
         nightMode =
             (this@MainActivity.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).nightMode == UiModeManager.MODE_NIGHT_YES
 
-        findViewById<ViewPager2>(R.id.vp_cardsView).adapter = this.UserCitiesAdapter(
-            arrayListOf(
-                Pair(113.1257, 22.4219),
-                Pair(112.1257, 32.4219),
-                Pair(113.5000, 24.3000),
-                Pair(120.45, 29.06)
-            )
+        try {
+            weatherInfoPreferences = getSharedPreferences("weather", Context.MODE_PRIVATE)
+            citiesPreferences = getSharedPreferences("cities", Context.MODE_PRIVATE)
+            cityList = citiesFromPreferences
+            if (cityList!!.check()) citiesFromPreferences = cityList!!
+        } catch (_: Exception) {
+            Toast.makeText(this, "原始应用数据已损坏\n正在重新创建数据", Toast.LENGTH_LONG).show()
+            cityList = Cities(listOf())
+            cityList!!.check()
+            citiesFromPreferences = cityList!!
+        }
+
+        LocationClient.setAgreePrivacy(true)
+
+        CityWeatherModel.intervalOfCheckInformationAcquisition = 1000
+
+        try {
+            locationClient = LocationClient(this)
+
+            locationClient!!.registerLocationListener(CityWeatherModel.localPositionListener)
+        } catch (_: Exception) {
+            Log.d("BaiduLocation", "请同意百度隐私合规接口")
+        }
+
+        findViewById<ImageButton>(R.id.add_city_btn).setOnClickListener {
+            showAddCityDialog()
+        }
+
+        mainCardView = findViewById(R.id.vp_cardsView)
+
+        if (getEnoughPermissions()) fleshData()
+    }
+
+    private fun checkAndGetPermissions() {
+
+        val packageManager = packageManager
+        var permissionInfo: PermissionInfo? = null
+
+        if (!getEnoughPermissions()) {
+            AlertDialog.Builder(this).setTitle("提示")
+                .setMessage("本应用需要授予以下权限以获取到较为准确的天气预测\n" +
+                        "\n" +
+                        "    · 精确位置\n" +
+                        "    · 读取与修改 WIFI 状态\n" +
+                        "    · 访问互联网\n" +
+                        "\n" +
+                        "请在按下确定按钮之后同意权限请求")
+                .setPositiveButton("确定") { _, _ ->
+                    for (it in permissionList) {
+                        try {
+                            permissionInfo = packageManager.getPermissionInfo(it, 0)
+                        } catch (e: PackageManager.NameNotFoundException) {
+                            e.printStackTrace()
+                        }
+                        if (ContextCompat.checkSelfPermission(
+                                this, it
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) ActivityCompat.requestPermissions(
+                            this, permissionList.toTypedArray(), permissionRequestCode
+                        )
+                        else Log.d(
+                            "Permission",
+                            "Permission [${permissionInfo?.loadLabel(packageManager) ?: "NULL"}] Has Been Obtained"
+                        )
+                    }
+                }.create().show()
+
+            Thread {
+                Log.d("Permission", "Trying Get Permission...")
+                while (!getEnoughPermissions()) Thread.sleep(500)
+                Log.d("Permission", "Permission Got Enough!")
+                runOnUiThread { fleshData() }
+            }.start()
+        }
+    }
+
+    private fun getEnoughPermissions(): Boolean {
+        for (it in permissionList) {
+            if (ContextCompat.checkSelfPermission(
+                    this, it
+                ) != PackageManager.PERMISSION_GRANTED
+            ) return false
+        }
+        return true
+    }
+
+    private fun fleshData() {
+
+        Log.d("BaiduLocation", "Start Locate")
+        locationClient?.start()
+
+        mainCardView!!.adapter = this.UserCitiesAdapter(
+            (cityList ?: Cities(listOf())).cities
         )
+
+        mainCardView!!.startAnimation(AnimationUtils.loadAnimation(this, R.anim.alpha_show))
+
+    }
+
+    private fun addCity(city: City) {
+        cityList!!.cities = cityList!!.cities.toMutableList().run {
+            add(city)
+            toList()
+        }
+        cityList!!.check()
+        citiesFromPreferences = cityList!!
+    }
+
+    private fun removeCity(index: Int) {
+        cityList!!.cities = cityList!!.cities.toMutableList().run {
+            if (index in 1 until size) removeAt(index)
+            toList()
+        }
+        cityList!!.check()
+        citiesFromPreferences = cityList!!
+    }
+
+    fun getStringResource(imageName: String): String =
+        resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
+            ?.run(::getString) ?: ""
+
+    private fun showAddCityDialog() =
+        (addCityDialog.takeIf { it != null } ?: initAddCityDialog()).show()
+
+    private fun initAddCityDialog(): Dialog {
+        addCityDialog = Dialog(this@MainActivity, R.style.dialog_bottom_full)
+
+        val view = View.inflate(this@MainActivity, R.layout.add_city_dialog, null)
+
+        addCityDialog!!.setCanceledOnTouchOutside(true)
+        addCityDialog!!.setCancelable(true)
+
+        val window = addCityDialog!!.window!!
+        window.setGravity(Gravity.BOTTOM)
+        window.setWindowAnimations(R.style.share_animation)
+
+        initAddCityView(view)
+
+        window.setContentView(view)
+        window.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
+        )
+
+        return addCityDialog as Dialog
+    }
+
+    private fun initAddCityView(view: View) {
+        view.findViewById<Button>(R.id.debug_btn_add).setOnClickListener {
+            addCity(
+                City(
+                    view.findViewById<EditText>(R.id.debug_et_longitude).text.toString()
+                        .toDoubleOrNull() ?: 120.0,
+                    view.findViewById<EditText>(R.id.debug_et_latitude).text.toString()
+                        .toDoubleOrNull() ?: 30.0,
+                    "",
+                    false
+                )
+            )
+            addCityDialog!!.hide()
+            fleshData()
+        }
     }
 
     private fun initDetailInfo(model: CityWeatherModel, view: View) {
@@ -78,39 +268,36 @@ class MainActivity : Activity() {
 
             // init AQI card
 
-            val aqiGradeGroup = arrayOf(
-                AqiScaler.ScaleData(0f, "优") {
-                if (it) getColor(R.color.aqi_excellent_night) else getColor(R.color.aqi_excellent_day)
-            }, AqiScaler.ScaleData(
-                50f, "良"
-            ) {
-                if (it) getColor(R.color.aqi_great_night) else getColor(R.color.aqi_great_day)
-            }, AqiScaler.ScaleData(
-                100f, "轻"
-            ) {
-                if (it) getColor(R.color.aqi_mild_night) else getColor(R.color.aqi_mild_day)
-            }, AqiScaler.ScaleData(
-                150f, "中"
-            ) {
-                if (it) getColor(R.color.aqi_moderate_night) else getColor(R.color.aqi_moderate_day)
-            }, AqiScaler.ScaleData(
-                200f, "重"
-            ) {
-                if (it) getColor(R.color.aqi_heavy_night) else getColor(R.color.aqi_heavy_day)
-            }, AqiScaler.ScaleData(
-                300f, "严"
-            ) {
-                if (it) getColor(R.color.aqi_severe_night) else getColor(R.color.aqi_severe_day)
-            })
-
             view.findViewById<AqiScaler>(R.id.detail_card_aqi).apply {
                 systemNightMode = nightMode
                 availableValue = weather.realtime.airQuality.aqi.chn.toFloat()
-                scaleGroup = aqiGradeGroup
+                scaleGroup = arrayOf(AqiScaler.ScaleData(0f, "优") {
+                    if (it) getColor(R.color.aqi_excellent_night) else getColor(R.color.aqi_excellent_day)
+                }, AqiScaler.ScaleData(
+                    50f, "良"
+                ) {
+                    if (it) getColor(R.color.aqi_great_night) else getColor(R.color.aqi_great_day)
+                }, AqiScaler.ScaleData(
+                    100f, "轻"
+                ) {
+                    if (it) getColor(R.color.aqi_mild_night) else getColor(R.color.aqi_mild_day)
+                }, AqiScaler.ScaleData(
+                    150f, "中"
+                ) {
+                    if (it) getColor(R.color.aqi_moderate_night) else getColor(R.color.aqi_moderate_day)
+                }, AqiScaler.ScaleData(
+                    200f, "重"
+                ) {
+                    if (it) getColor(R.color.aqi_heavy_night) else getColor(R.color.aqi_heavy_day)
+                }, AqiScaler.ScaleData(
+                    300f, "严"
+                ) {
+                    if (it) getColor(R.color.aqi_severe_night) else getColor(R.color.aqi_severe_day)
+                })
                 applyChanges()
             }
 
-            val iaqiMap = AqiCalculator(
+            val iaqiDataMap = AqiCalculator(
                 weather.realtime.airQuality.pm25,
                 weather.realtime.airQuality.pm10,
                 weather.realtime.airQuality.o3,
@@ -119,66 +306,79 @@ class MainActivity : Activity() {
                 weather.realtime.airQuality.co
             ).toMap()
 
-            view.findViewById<TextView>(R.id.detail_tv_pm25_con).text =
-                iaqiMap[AqiCalculator.GasType.PM25]!!.second.toString().run {
-                    if (length > 4) split('.')[0]
-                    else this
+            for (it in arrayOf<IaqiCard>(
+                view.findViewById(R.id.detail_ic_pm25),
+                view.findViewById(R.id.detail_ic_pm10),
+                view.findViewById(R.id.detail_ic_so2),
+                view.findViewById(R.id.detail_ic_co),
+                view.findViewById(R.id.detail_ic_no2),
+                view.findViewById(R.id.detail_ic_o3)
+            )) it.apply {
+                dataResource = when (it.id) {
+                    R.id.detail_ic_pm25 -> IaqiCard.IaqiDataResource(
+                        drawableToBitmap(
+                            getDrawable(
+                                this@MainActivity, R.drawable.logo_pm25
+                            )!!
+                        ),
+                        getStringResource("PM25"),
+                        iaqiDataMap[AqiCalculator.GasType.PM25]!!.second.toString()
+                            .run { if (length > 4) split('.')[0] else this },
+                        iaqiDataMap[AqiCalculator.GasType.PM25]!!.third.toInt().toString(),
+                        iaqiDataMap[AqiCalculator.GasType.PM25]!!.first
+                    )
+                    R.id.detail_ic_pm10 -> IaqiCard.IaqiDataResource(
+                        drawableToBitmap(
+                            getDrawable(
+                                this@MainActivity, R.drawable.logo_pm10
+                            )!!
+                        ),
+                        getStringResource("PM10"),
+                        iaqiDataMap[AqiCalculator.GasType.PM10]!!.second.toString()
+                            .run { if (length > 4) split('.')[0] else this },
+                        iaqiDataMap[AqiCalculator.GasType.PM10]!!.third.toInt().toString(),
+                        iaqiDataMap[AqiCalculator.GasType.PM10]!!.first
+                    )
+                    R.id.detail_ic_o3 -> IaqiCard.IaqiDataResource(
+                        drawableToBitmap(getDrawable(this@MainActivity, R.drawable.logo_o3)!!),
+                        getStringResource("O3"),
+                        iaqiDataMap[AqiCalculator.GasType.O3]!!.second.toString()
+                            .run { if (length > 4) split('.')[0] else this },
+                        iaqiDataMap[AqiCalculator.GasType.O3]!!.third.toInt().toString(),
+                        iaqiDataMap[AqiCalculator.GasType.O3]!!.first
+                    )
+                    R.id.detail_ic_so2 -> IaqiCard.IaqiDataResource(
+                        drawableToBitmap(getDrawable(this@MainActivity, R.drawable.logo_so2)!!),
+                        getStringResource("SO2"),
+                        iaqiDataMap[AqiCalculator.GasType.SO2]!!.second.toString()
+                            .run { if (length > 4) split('.')[0] else this },
+                        iaqiDataMap[AqiCalculator.GasType.SO2]!!.third.toInt().toString(),
+                        iaqiDataMap[AqiCalculator.GasType.SO2]!!.first
+                    )
+                    R.id.detail_ic_no2 -> IaqiCard.IaqiDataResource(
+                        drawableToBitmap(getDrawable(this@MainActivity, R.drawable.logo_no2)!!),
+                        getStringResource("NO2"),
+                        iaqiDataMap[AqiCalculator.GasType.NO2]!!.second.toString()
+                            .run { if (length > 4) split('.')[0] else this },
+                        iaqiDataMap[AqiCalculator.GasType.NO2]!!.third.toInt().toString(),
+                        iaqiDataMap[AqiCalculator.GasType.NO2]!!.first
+                    )
+                    R.id.detail_ic_co -> IaqiCard.IaqiDataResource(
+                        drawableToBitmap(getDrawable(this@MainActivity, R.drawable.logo_co)!!),
+                        getStringResource("CO"),
+                        iaqiDataMap[AqiCalculator.GasType.CO]!!.second.toString()
+                            .run { if (length > 4) split('.')[0] else this },
+                        iaqiDataMap[AqiCalculator.GasType.CO]!!.third.toInt().toString(),
+                        iaqiDataMap[AqiCalculator.GasType.CO]!!.first
+                    )
+                    else -> null
                 }
-            view.findViewById<TextView>(R.id.detail_tv_pm25_iaqi).text =
-                iaqiMap[AqiCalculator.GasType.PM25]!!.third.toInt().toString()
+                systemNightMode = nightMode
+                night_mode_main_bgColor = getColor(R.color.iaqi_main_bg_night)
+                day_mode_main_bgColor = getColor(R.color.iaqi_main_bg_day)
+                applyChanges()
+            }
 
-            view.findViewById<TextView>(R.id.detail_tv_o3_con).text =
-                iaqiMap[AqiCalculator.GasType.O3]!!.second.toString().run {
-                    if (length > 4) split('.')[0]
-                    else this
-                }
-            view.findViewById<TextView>(R.id.detail_tv_o3_iaqi).text =
-                iaqiMap[AqiCalculator.GasType.O3]!!.third.toInt().toString()
-
-            view.findViewById<TextView>(R.id.detail_tv_pm10_con).text =
-                iaqiMap[AqiCalculator.GasType.PM10]!!.second.toString().run {
-                    if (length > 4) split('.')[0]
-                    else this
-                }
-            view.findViewById<TextView>(R.id.detail_tv_pm10_iaqi).text =
-                iaqiMap[AqiCalculator.GasType.PM10]!!.third.toInt().toString()
-
-            view.findViewById<TextView>(R.id.detail_tv_so2_con).text =
-                iaqiMap[AqiCalculator.GasType.SO2]!!.second.toString().run {
-                    if (length > 4) split('.')[0]
-                    else this
-                }
-            view.findViewById<TextView>(R.id.detail_tv_so2_iaqi).text =
-                iaqiMap[AqiCalculator.GasType.SO2]!!.third.toInt().toString()
-
-            view.findViewById<TextView>(R.id.detail_tv_no2_con).text =
-                iaqiMap[AqiCalculator.GasType.NO2]!!.second.toString().run {
-                    if (length > 4) split('.')[0]
-                    else this
-                }
-            view.findViewById<TextView>(R.id.detail_tv_no2_iaqi).text =
-                iaqiMap[AqiCalculator.GasType.NO2]!!.third.toInt().toString()
-
-            view.findViewById<TextView>(R.id.detail_tv_co_con).text =
-                iaqiMap[AqiCalculator.GasType.CO]!!.second.toString().run {
-                    if (length > 4) split('.')[0]
-                    else this
-                }
-            view.findViewById<TextView>(R.id.detail_tv_co_iaqi).text =
-                iaqiMap[AqiCalculator.GasType.CO]!!.third.toInt().toString()
-
-            if (iaqiMap[AqiCalculator.GasType.PM25]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_pm25_background).background =
-                getDrawable(this, R.color.light_green)
-            if (iaqiMap[AqiCalculator.GasType.PM10]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_pm10_background).background =
-                getDrawable(this, R.color.light_green)
-            if (iaqiMap[AqiCalculator.GasType.O3]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_o3_background).background =
-                getDrawable(this, R.color.light_green)
-            if (iaqiMap[AqiCalculator.GasType.SO2]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_so2_background).background =
-                getDrawable(this, R.color.light_green)
-            if (iaqiMap[AqiCalculator.GasType.NO2]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_no2_background).background =
-                getDrawable(this, R.color.light_green)
-            if (iaqiMap[AqiCalculator.GasType.CO]!!.first) view.findViewById<LinearLayout>(R.id.detail_card_co_background).background =
-                getDrawable(this, R.color.light_green)
 
             // init daily weather forecast card
 
@@ -331,7 +531,7 @@ class MainActivity : Activity() {
     }
 
     inner class UserCitiesAdapter(
-        private var list: ArrayList<Pair<Double, Double>>,
+        private var list: List<City>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
         inner class UserCitiesViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -371,17 +571,64 @@ class MainActivity : Activity() {
             private val detailBtn: View = view.findViewById(R.id.btn_to_detail)
 
             @SuppressLint("SetTextI18n")
-            fun build(position: Pair<Double, Double>) {
+            fun build(position: City, index: Int) {
 
                 Thread {
 
                     val model = CityWeatherModel()
 
-                    if (model.updateWithAreaID(
-                            caiyunWeatherKey, position.first, position.second
-                        ).weatherInfo == null
+                    val editor = weatherInfoPreferences!!.edit()
+
+                    runOnUiThread {
+                        detailBtn.setOnLongClickListener {
+                            if (index == 0) Toast.makeText(
+                                this@MainActivity, "不能删除本地城市！", Toast.LENGTH_SHORT
+                            ).show()
+                            else AlertDialog.Builder(this@MainActivity).setTitle("提示")
+                                .setMessage("确认删除该城市？").setPositiveButton("删除") { _, _ ->
+                                    removeCity(index)
+                                    fleshData()
+                                }.setNegativeButton("取消") { _, _ ->
+
+                                }.create().show()
+                            true
+                        }
+                    }
+
+                    if (model.updateWithCity(
+                            caiyunWeatherKey, position
+                        ).available
                     ) {
-                        return@Thread
+                        editor.putString(position.hashCode().toString(), model.dataBody)
+                        editor.apply()
+                    } else {
+                        Log.d("Data", "数据获取失败，正在尝试获取先前成功的数据")
+                        weatherInfoPreferences!!.getString(position.hashCode().toString(), "")
+                            .takeIf {
+                                it?.isNotBlank() ?: false
+                            }.run {
+                                if (!model.updateWithDataString(
+                                        this ?: "", position.showName
+                                    ).available
+                                ) {
+                                    runOnUiThread {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "数据获取失败，没有近期成功的数据可展示",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                    return@Thread
+                                } else {
+                                    runOnUiThread {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "数据获取失败，正在展示的是最后一次成功的数据",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                }
+                            }
                     }
 
                     val weather = model.weatherInfo!!.result
@@ -410,7 +657,7 @@ class MainActivity : Activity() {
 
                         nowWeatherBackground.startAnimation(
                             AnimationUtils.loadAnimation(
-                                this@MainActivity, R.anim.alpha_show
+                                this@MainActivity, R.anim.focusing_show
                             )
                         )
 
@@ -462,7 +709,7 @@ class MainActivity : Activity() {
                 }.start()
             }
 
-            fun initDetailDialog(model: CityWeatherModel): Boolean {
+            private fun initDetailDialog(model: CityWeatherModel): Boolean {
 
                 var available = true
 
@@ -503,7 +750,7 @@ class MainActivity : Activity() {
         }
 
         override fun onBindViewHolder(holder: UserCitiesViewHolder, position: Int) {
-            holder.build(list[position])
+            holder.build(list[position], position)
         }
 
         override fun getItemCount(): Int {

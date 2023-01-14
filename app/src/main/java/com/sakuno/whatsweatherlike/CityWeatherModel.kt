@@ -1,6 +1,8 @@
 package com.sakuno.whatsweatherlike
 
 import android.util.Log
+import com.baidu.location.BDAbstractLocationListener
+import com.baidu.location.BDLocation
 import com.google.gson.Gson
 import com.sakuno.whatsweatherlike.utils.OkHttpTools
 import java.text.SimpleDateFormat
@@ -13,6 +15,8 @@ class CityWeatherModel {
         return "https://api.caiyunapp.com/v2.6/${key}/${longitude},${latitude}/weather?alert=true&dailysteps=15&hourlysteps=24"
     }
 
+    var available = false
+
     var weatherInfo: WeatherInfo? = null
 
     var todayWeekDay: Int = 0
@@ -21,35 +25,22 @@ class CityWeatherModel {
 
     var cityName: String = "待获取城市名"
 
-    fun updateWithAreaID(key: String, longitude: Double, latitude: Double): CityWeatherModel {
-        val dataBody = OkHttpTools.getJsonObjectResponse(weatherURL(key, longitude, latitude))
-
-        val calendar = Calendar.getInstance()
-        calendar.time = Date()
-        todayWeekDay = calendar.get(Calendar.DAY_OF_WEEK) - 1
-        updateTime =
-            SimpleDateFormat("HH:mm", Locale("cn")).format(Date(System.currentTimeMillis()))
-
-        try {
-            weatherInfo = Gson().fromJson(dataBody, WeatherInfo::class.java)
-            val cityNameBuilder = StringBuilder()
-            var isProvinceName = true
-            for (it in weatherInfo!!.result.alert.adcodes) {
-                if (isProvinceName) isProvinceName = false
-                else cityNameBuilder.append(' ')
-                cityNameBuilder.append(it.name)
-            }
-            cityName = cityNameBuilder.toString()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("Weather Api", "Data Package Error")
-        }
-
-
-        return this
-    }
+    var dataBody: String = ""
 
     companion object {
+        var localCityPosition: City? = null
+
+        val localPositionListener = object : BDAbstractLocationListener() {
+            override fun onReceiveLocation(p0: BDLocation) {
+                Log.d("BaiduLocation", "ErrorCode: ${p0.locType}")
+                localCityPosition = City(p0.longitude, p0.latitude, "", false)
+                locateFinish = true
+            }
+        }
+
+        var locateFinish = false
+
+        var intervalOfCheckInformationAcquisition = 1000L
 
         const val TIME_NORMAL = 0
 
@@ -208,4 +199,72 @@ class CityWeatherModel {
             else -> "severe"
         }
     }
+
+    private val localCity: City
+        get() {
+            while(!locateFinish) {
+                Log.d("BaiduLocation", "Trying Locate...")
+                Thread.sleep(intervalOfCheckInformationAcquisition)
+            }
+            Log.d("BaiduLocation", "Locate Finish!")
+            return localCityPosition!!
+        }
+
+    fun updateWithDataString(dataString: String, showName: String): CityWeatherModel {
+        dataBody = dataString
+
+        try {
+            weatherInfo = Gson().fromJson(dataBody, WeatherInfo::class.java)
+
+            val calendar = Calendar.getInstance()
+
+            calendar.timeInMillis = weatherInfo!!.serverTime * 1000
+
+            todayWeekDay = calendar.get(Calendar.DAY_OF_WEEK) - 1
+            updateTime =
+                SimpleDateFormat("HH:mm", Locale("cn")).format(calendar.time)
+
+            Log.d("Data", "InM Time: ${weatherInfo!!.serverTime}")
+            Log.d(
+                "Data",
+                "Update Time: ${calendar.get(Calendar.YEAR)} ${calendar.get(Calendar.MONTH) + 1} ${
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                }"
+            )
+
+            cityName = showName.ifBlank {
+                val cityNameBuilder = StringBuilder()
+                var isProvinceName = true
+                for (it in weatherInfo!!.result.alert.adcodes) {
+                    if (isProvinceName) isProvinceName = false
+                    else cityNameBuilder.append(' ')
+                    cityNameBuilder.append(it.name)
+                }
+                cityNameBuilder.toString()
+            }
+
+            available = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("Weather Api", "Data Package Error")
+        }
+
+        return this
+    }
+
+    fun updateWithCity(key: String, city: City): CityWeatherModel {
+
+        val prepareCity = if (city.isLocal) localCity else city
+
+        return updateWithDataString(
+            OkHttpTools.getJsonObjectResponse(
+                weatherURL(
+                    key,
+                    prepareCity.longitude,
+                    prepareCity.latitude
+                )
+            ), prepareCity.showName
+        )
+    }
+
 }

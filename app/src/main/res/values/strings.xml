@@ -119,5 +119,11 @@
     <string name="NO2">二氧化氮</string>
     <string name="O3">臭氧</string>
     <string name="CO">一氧化氮</string>
+    <string name="daily_forecast">每日预测</string>
+    <string name="add_city">添加城市</string>
+
+    <string name="longitude">经度 in Double</string>
+    <string name="latitude">纬度 in Double</string>
+    <string name="back">返回</string>
 
 </resources>

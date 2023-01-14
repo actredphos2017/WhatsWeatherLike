@@ -6,12 +6,37 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <ImageButton
+        android:id="@+id/menu_btn"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="6dp"
+        android:src="@drawable/icon_menu"
+        android:background="@color/translation"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/add_city" />
+
+    <ImageButton
+        android:id="@+id/add_city_btn"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="6dp"
+        android:src="@drawable/icon_add_city"
+        android:background="@color/translation"
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@string/add_city" />
+
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/vp_cardsView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="60dp"
-        android:layout_marginBottom="60dp"
+        android:layout_marginVertical="60dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 

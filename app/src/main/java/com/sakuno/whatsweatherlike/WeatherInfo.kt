@@ -14,7 +14,7 @@ data class WeatherInfo(
     @SerializedName("result")
     val result: Result,
     @SerializedName("server_time")
-    val serverTime: Int,
+    val serverTime: Long,
     @SerializedName("status")
     val status: String,
     @SerializedName("timezone")

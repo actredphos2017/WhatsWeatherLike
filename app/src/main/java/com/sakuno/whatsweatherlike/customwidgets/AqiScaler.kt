@@ -205,7 +205,7 @@ class AqiScaler @JvmOverloads constructor(
         )
 
         canvas.drawText(
-            scaleGroup[gradeIndex].desc,
+            scaleGroup.getOrNull(gradeIndex)?.desc ?: "未知",
             middleWidth,
             circleCenterPosition + dp2px(11f),
             infoGradeTextPainter
