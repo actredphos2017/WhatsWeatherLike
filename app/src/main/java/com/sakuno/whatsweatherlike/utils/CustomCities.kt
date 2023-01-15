@@ -1,13 +1,13 @@
-package com.sakuno.whatsweatherlike
+package com.sakuno.whatsweatherlike.utils
 import com.google.gson.annotations.SerializedName
 
 
-data class Cities(
+data class CustomCities(
     @SerializedName("cities")
     var cities: List<City>
 ) {
     fun check(): Boolean {
-        var oldSize = cities.size
+        val oldSize = cities.size
         cities = cities.toMutableList().run {
             removeIf { it.isLocal }
             add(0, City.getLocalCity)

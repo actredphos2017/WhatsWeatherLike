@@ -1,4 +1,4 @@
-package com.sakuno.whatsweatherlike
+package com.sakuno.whatsweatherlike.utils
 
 import com.google.gson.annotations.SerializedName
 

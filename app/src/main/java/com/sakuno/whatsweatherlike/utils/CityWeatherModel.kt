@@ -1,10 +1,10 @@
-package com.sakuno.whatsweatherlike
+package com.sakuno.whatsweatherlike.utils
 
 import android.util.Log
 import com.baidu.location.BDAbstractLocationListener
 import com.baidu.location.BDLocation
 import com.google.gson.Gson
-import com.sakuno.whatsweatherlike.utils.OkHttpTools
+import com.sakuno.whatsweatherlike.R
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt

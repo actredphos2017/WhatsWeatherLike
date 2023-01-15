@@ -3,28 +3,52 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
     android:background="@drawable/day_mode_half_radius_rectangle"
-    android:paddingVertical="60dp">
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="20dp">
 
-    <EditText
-        android:id="@+id/debug_et_longitude"
-        android:layout_marginHorizontal="60dp"
+    <GridLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/longitude"/>
+        android:orientation="horizontal"
+        android:columnCount="2"
 
-    <EditText
-        android:id="@+id/debug_et_latitude"
-        android:layout_marginHorizontal="60dp"
+        android:gravity="center">
+
+        <EditText
+            android:layout_columnWeight="1"
+            android:id="@+id/addcity_et_city_name"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:inputType="text"
+            android:autofillHints="text"
+            android:hint="@string/city_name"/>
+
+        <ImageButton
+            android:id="@+id/addcity_btn_search"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/white_circle"
+            android:src="@drawable/icon_search"
+            android:scaleType="center"
+            android:contentDescription="@string/search" />
+
+    </GridLayout>
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/latitude"/>
+        android:layout_height="match_parent">
 
-    <Button
-        android:id="@+id/debug_btn_add"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="添加" />
+        <LinearLayout
+            android:id="@+id/addcity_ll_search_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </ScrollView>
+
+
+
+
 
 </LinearLayout>

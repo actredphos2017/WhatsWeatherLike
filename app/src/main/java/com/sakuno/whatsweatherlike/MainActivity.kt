@@ -20,7 +20,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.AnimationUtils
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -35,8 +34,10 @@ import androidx.viewpager2.widget.ViewPager2
 import com.baidu.location.LocationClient
 import com.google.gson.Gson
 import com.sakuno.whatsweatherlike.customwidgets.*
-import com.sakuno.whatsweatherlike.utils.AqiCalculator
-import com.sakuno.whatsweatherlike.utils.MyTime
+import com.sakuno.whatsweatherlike.utils.*
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 import java.util.*
 import kotlin.math.min
 
@@ -44,7 +45,7 @@ class MainActivity : Activity() {
 
     var caiyunWeatherKey = "mkhvpq9w0AsN6gjl"
 
-//    var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
+//    private var baiduAK = "7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk"
 
     private var locationClient: LocationClient? = null
 
@@ -56,18 +57,45 @@ class MainActivity : Activity() {
 
     private var citiesPreferences: SharedPreferences? = null
 
-    private var cityList: Cities? = null
+    private var customCityList: CustomCities? = null
+
+    private var cityListAvailable = false
+
+    private var cityList: CityList? = null
 
     private var mainCardView: ViewPager2? = null
 
-    private var citiesFromPreferences: Cities
+    private var fleshDefaultIndex: Int = 0
+
+    private var customCitiesFromPreferences: CustomCities
         get() = Gson().fromJson(
-            citiesPreferences!!.getString("cities", "") ?: "", Cities::class.java
-        ) ?: Cities(listOf())
+            citiesPreferences!!.getString("cities", "") ?: "", CustomCities::class.java
+        ) ?: CustomCities(listOf())
         set(value) {
             val editor = citiesPreferences?.edit()
-            editor?.putString("cities", Gson().toJson(value, Cities::class.java))
+            editor?.putString("cities", Gson().toJson(value, CustomCities::class.java))
             editor?.apply()
+        }
+
+    private var favoriteCity: City
+        get() = Gson().fromJson(
+            citiesPreferences!!.getString("favorite_city", "") ?: "", City::class.java
+        )
+        set(value) {
+            val editor = citiesPreferences?.edit()
+            editor?.putString("favorite_city", Gson().toJson(value, City::class.java))
+            editor?.apply()
+        }
+
+    private var favoriteCityIndex: Int
+        get() = try {
+            customCityList!!.cities.indexOf(favoriteCity)
+                .takeIf { it in customCityList!!.cities.indices } ?: 0
+        } catch (_: Exception) {
+            0
+        }
+        set(value) {
+            favoriteCity = customCityList!!.cities[value]
         }
 
     private val permissionRequestCode = 1000
@@ -95,13 +123,13 @@ class MainActivity : Activity() {
         try {
             weatherInfoPreferences = getSharedPreferences("weather", Context.MODE_PRIVATE)
             citiesPreferences = getSharedPreferences("cities", Context.MODE_PRIVATE)
-            cityList = citiesFromPreferences
-            if (cityList!!.check()) citiesFromPreferences = cityList!!
+            customCityList = customCitiesFromPreferences
+            if (customCityList!!.check()) customCitiesFromPreferences = customCityList!!
         } catch (_: Exception) {
             Toast.makeText(this, "原始应用数据已损坏\n正在重新创建数据", Toast.LENGTH_LONG).show()
-            cityList = Cities(listOf())
-            cityList!!.check()
-            citiesFromPreferences = cityList!!
+            customCityList = CustomCities(listOf())
+            customCityList!!.check()
+            customCitiesFromPreferences = customCityList!!
         }
 
         LocationClient.setAgreePrivacy(true)
@@ -110,11 +138,12 @@ class MainActivity : Activity() {
 
         try {
             locationClient = LocationClient(this)
-
             locationClient!!.registerLocationListener(CityWeatherModel.localPositionListener)
         } catch (_: Exception) {
             Log.d("BaiduLocation", "请同意百度隐私合规接口")
         }
+
+        Thread { initCityList() }.start()
 
         findViewById<ImageButton>(R.id.add_city_btn).setOnClickListener {
             showAddCityDialog()
@@ -122,7 +151,39 @@ class MainActivity : Activity() {
 
         mainCardView = findViewById(R.id.vp_cardsView)
 
+        fleshDefaultIndex = favoriteCityIndex
+
         if (getEnoughPermissions()) fleshData()
+    }
+
+    private fun initCityList() {
+
+        Log.d("ASSETS_READER", "START_GET_ASSETS")
+
+        val stringBuilder = StringBuilder()
+        try {
+            val bf =
+                BufferedReader(InputStreamReader(resources.assets.open("BaiduMap_cityCenter.json")))
+            while (true) {
+                val line: String = bf.readLine() ?: break
+                stringBuilder.append(line)
+            }
+
+        } catch (_: IOException) {
+        }
+
+        val res = stringBuilder.toString()
+
+        Log.d("ASSETS_READER", res)
+
+        try {
+            cityList = CityList.fromJsonString(res)
+            cityListAvailable = true
+        } catch (_: Exception) {
+            runOnUiThread {
+                Toast.makeText(this@MainActivity, "城市列表已损坏", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun checkAndGetPermissions() {
@@ -131,33 +192,27 @@ class MainActivity : Activity() {
         var permissionInfo: PermissionInfo? = null
 
         if (!getEnoughPermissions()) {
-            AlertDialog.Builder(this).setTitle("提示")
-                .setMessage("本应用需要授予以下权限以获取到较为准确的天气预测\n" +
-                        "\n" +
-                        "    · 精确位置\n" +
-                        "    · 读取与修改 WIFI 状态\n" +
-                        "    · 访问互联网\n" +
-                        "\n" +
-                        "请在按下确定按钮之后同意权限请求")
-                .setPositiveButton("确定") { _, _ ->
-                    for (it in permissionList) {
-                        try {
-                            permissionInfo = packageManager.getPermissionInfo(it, 0)
-                        } catch (e: PackageManager.NameNotFoundException) {
-                            e.printStackTrace()
-                        }
-                        if (ContextCompat.checkSelfPermission(
-                                this, it
-                            ) != PackageManager.PERMISSION_GRANTED
-                        ) ActivityCompat.requestPermissions(
-                            this, permissionList.toTypedArray(), permissionRequestCode
-                        )
-                        else Log.d(
-                            "Permission",
-                            "Permission [${permissionInfo?.loadLabel(packageManager) ?: "NULL"}] Has Been Obtained"
-                        )
+            AlertDialog.Builder(this).setTitle("提示").setMessage(
+                "本应用需要授予以下权限以获取到较为准确的天气预测\n" + "\n" + "    · 精确位置\n" + "    · 读取与修改 WIFI 状态\n" + "    · 访问互联网\n" + "\n" + "请在按下确定按钮之后同意权限请求"
+            ).setPositiveButton("确定") { _, _ ->
+                for (it in permissionList) {
+                    try {
+                        permissionInfo = packageManager.getPermissionInfo(it, 0)
+                    } catch (e: PackageManager.NameNotFoundException) {
+                        e.printStackTrace()
                     }
-                }.create().show()
+                    if (ContextCompat.checkSelfPermission(
+                            this, it
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) ActivityCompat.requestPermissions(
+                        this, permissionList.toTypedArray(), permissionRequestCode
+                    )
+                    else Log.d(
+                        "Permission",
+                        "Permission [${permissionInfo?.loadLabel(packageManager) ?: "NULL"}] Has Been Obtained"
+                    )
+                }
+            }.create().show()
 
             Thread {
                 Log.d("Permission", "Trying Get Permission...")
@@ -184,39 +239,45 @@ class MainActivity : Activity() {
         locationClient?.start()
 
         mainCardView!!.adapter = this.UserCitiesAdapter(
-            (cityList ?: Cities(listOf())).cities
+            (customCityList ?: CustomCities(listOf())).cities
         )
 
         mainCardView!!.startAnimation(AnimationUtils.loadAnimation(this, R.anim.alpha_show))
 
+        mainCardView!!.currentItem = fleshDefaultIndex
+        fleshDefaultIndex = favoriteCityIndex
     }
 
     private fun addCity(city: City) {
-        cityList!!.cities = cityList!!.cities.toMutableList().run {
+        customCityList!!.cities = customCityList!!.cities.toMutableList().run {
             add(city)
             toList()
         }
-        cityList!!.check()
-        citiesFromPreferences = cityList!!
+        customCityList!!.check()
+        customCitiesFromPreferences = customCityList!!
     }
 
     private fun removeCity(index: Int) {
-        cityList!!.cities = cityList!!.cities.toMutableList().run {
+        customCityList!!.cities = customCityList!!.cities.toMutableList().run {
             if (index in 1 until size) removeAt(index)
             toList()
         }
-        cityList!!.check()
-        citiesFromPreferences = cityList!!
+        customCityList!!.check()
+        customCitiesFromPreferences = customCityList!!
     }
 
-    fun getStringResource(imageName: String): String =
-        resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
-            ?.run(::getString) ?: ""
-
     private fun showAddCityDialog() =
-        (addCityDialog.takeIf { it != null } ?: initAddCityDialog()).show()
+        (addCityDialog.takeIf { it != null } ?: initAddCityDialog())?.show()
 
-    private fun initAddCityDialog(): Dialog {
+    private fun initAddCityDialog(): Dialog? {
+
+        if (!cityListAvailable) {
+            runOnUiThread {
+                Toast.makeText(this@MainActivity, "城市列表已损坏", Toast.LENGTH_SHORT).show()
+            }
+            return addCityDialog
+        }
+
         addCityDialog = Dialog(this@MainActivity, R.style.dialog_bottom_full)
 
         val view = View.inflate(this@MainActivity, R.layout.add_city_dialog, null)
@@ -235,23 +296,50 @@ class MainActivity : Activity() {
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
         )
 
-        return addCityDialog as Dialog
+        return addCityDialog
     }
 
     private fun initAddCityView(view: View) {
-        view.findViewById<Button>(R.id.debug_btn_add).setOnClickListener {
-            addCity(
-                City(
-                    view.findViewById<EditText>(R.id.debug_et_longitude).text.toString()
-                        .toDoubleOrNull() ?: 120.0,
-                    view.findViewById<EditText>(R.id.debug_et_latitude).text.toString()
-                        .toDoubleOrNull() ?: 30.0,
-                    "",
-                    false
+
+        val searchResultLayout = view.findViewById<LinearLayout>(R.id.addcity_ll_search_result)
+
+        view.findViewById<ImageButton>(R.id.addcity_btn_search).setOnClickListener {
+            val searchKey = view.findViewById<EditText>(R.id.addcity_et_city_name).text.toString()
+
+            if (searchKey.isEmpty()) {
+                AlertDialog.Builder(this@MainActivity).setTitle("提示").setMessage("请输入城市名")
+                    .setPositiveButton("确定") { _, _ -> }.create().show()
+                return@setOnClickListener
+            }
+
+            searchResultLayout.removeAllViews()
+
+            for (each in cityList!!.searchCity(searchKey)) {
+                val resultView =
+                    View.inflate(this@MainActivity, R.layout.add_city_result_item, null)
+
+                resultView.isClickable = true
+
+                resultView.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT
                 )
-            )
-            addCityDialog!!.hide()
-            fleshData()
+
+                resultView.findViewById<TextView>(R.id.addcityres_tv_result_name).text =
+                    each.showName
+                resultView.findViewById<TextView>(R.id.addcityres_tv_longitude).text =
+                    each.longitude.toString()
+                resultView.findViewById<TextView>(R.id.addcityres_tv_latitude).text =
+                    each.latitude.toString()
+
+                resultView.setOnClickListener {
+                    addCity(each)
+                    fleshDefaultIndex = customCityList!!.cities.size - 1
+                    fleshData()
+                    addCityDialog!!.hide()
+                }
+
+                searchResultLayout.addView(resultView)
+            }
         }
     }
 
@@ -570,6 +658,23 @@ class MainActivity : Activity() {
 
             private val detailBtn: View = view.findViewById(R.id.btn_to_detail)
 
+            private fun initDetailDynamicElement(index: Int, view: View) {
+
+                runOnUiThread {
+                    view.findViewById<ImageButton>(R.id.detail_ib_collection)?.run {
+                        if (favoriteCityIndex == index) setImageResource(R.drawable.star_fill)
+                        else {
+                            setImageResource(R.drawable.star)
+                            setOnClickListener {
+                                setImageResource(R.drawable.star_fill)
+                                favoriteCityIndex = index
+                            }
+                        }
+                    }
+                }
+
+            }
+
             @SuppressLint("SetTextI18n")
             fun build(position: City, index: Int) {
 
@@ -698,8 +803,11 @@ class MainActivity : Activity() {
                             )
                         )
 
-                        if (initDetailDialog(model)) {
+                        val dialogInitResult = initDetailDialog(model)
+
+                        if (dialogInitResult.first) {
                             detailBtn.setOnClickListener {
+                                initDetailDynamicElement(index, dialogInitResult.second)
                                 detailDialog?.show()
                             }
                         }
@@ -709,7 +817,7 @@ class MainActivity : Activity() {
                 }.start()
             }
 
-            private fun initDetailDialog(model: CityWeatherModel): Boolean {
+            private fun initDetailDialog(model: CityWeatherModel): Pair<Boolean, View> {
 
                 var available = true
 
@@ -723,6 +831,7 @@ class MainActivity : Activity() {
                     available = false
                 }
 
+                view.findViewById<ImageButton>(R.id.detail_ib_back).setOnClickListener { detailDialog!!.hide() }
 
                 detailDialog!!.setCanceledOnTouchOutside(true)
                 detailDialog!!.setCancelable(true)
@@ -736,7 +845,7 @@ class MainActivity : Activity() {
                     WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
                 )
 
-                return available
+                return Pair(available, view)
 
             }
         }
@@ -764,5 +873,9 @@ class MainActivity : Activity() {
         drawable.draw(Canvas(bitmap))
         bitmap
     }
+
+    fun getStringResource(imageName: String): String =
+        resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
+            ?.run(::getString) ?: ""
 
 }
