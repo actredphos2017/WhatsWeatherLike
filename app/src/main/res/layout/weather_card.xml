@@ -30,7 +30,7 @@
             android:layout_marginEnd="20dp"
             android:layout_marginBottom="5dp"
             android:gravity="end|bottom"
-            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintBottom_toTopOf="@+id/card_ll_daily_weather_background"
             app:layout_constraintEnd_toEndOf="@+id/iv_cardWeatherBackground">
 
             <ImageView
@@ -59,29 +59,54 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
+
+        <ImageView
+            android:id="@+id/card_iv_is_local"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:scaleType="center"
+            android:visibility="invisible"
+            android:layout_margin="12dp"
+            android:src="@drawable/icon_location_white"
+            tools:ignore="ContentDescription" />
+
+        <ImageView
+            android:id="@+id/card_iv_favorite"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:scaleType="center"
+            android:visibility="invisible"
+            android:layout_margin="12dp"
+            android:src="@drawable/icon_star_fill_white"
+            tools:ignore="ContentDescription" />
+
         <!-- 城市标题 -->
         <TextView
             android:id="@+id/tv_cityTitle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="52dp"
             android:layout_margin="12dp"
-            android:background="@drawable/radius_rectangle"
+            android:background="@color/translation"
             android:padding="10dp"
-            android:text="@string/locating"
+            android:text="@string/getting"
             android:textAlignment="center"
-            android:textColor="@color/light_black"
             android:textSize="24sp"
+            android:textColor="@color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <!-- 近日天气 -->
         <LinearLayout
-            android:id="@+id/linearLayout"
+            android:id="@+id/card_ll_daily_weather_background"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="12dp"
-            android:background="@drawable/radius_rectangle"
+            android:background="@color/translation"
             android:orientation="vertical"
             android:padding="10dp"
             app:layout_constraintBottom_toBottomOf="@+id/constraintLayout"
@@ -97,7 +122,6 @@
                     android:layout_height="wrap_content"
                     android:text="@string/today"
                     android:textAlignment="center"
-                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -130,7 +154,6 @@
                         android:layout_height="match_parent"
                         android:text="@string/getting"
                         android:textAlignment="textStart"
-                        android:textColor="@color/light_black"
                         android:textSize="24sp" />
 
                 </LinearLayout>
@@ -142,7 +165,6 @@
                     android:layout_columnWeight="1"
                     android:text="@string/getting"
                     android:textAlignment="center"
-                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -167,7 +189,6 @@
                     android:layout_height="wrap_content"
                     android:text="@string/tomorrow"
                     android:textAlignment="center"
-                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -199,7 +220,6 @@
                         android:layout_height="match_parent"
                         android:text="@string/getting"
                         android:textAlignment="textStart"
-                        android:textColor="@color/light_black"
                         android:textSize="24sp" />
 
                 </LinearLayout>
@@ -211,7 +231,6 @@
                     android:layout_columnWeight="1"
                     android:text="@string/getting"
                     android:textAlignment="center"
-                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -237,7 +256,6 @@
                     android:layout_height="wrap_content"
                     android:text="@string/dayOfWeek3"
                     android:textAlignment="center"
-                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -269,7 +287,6 @@
                         android:layout_height="match_parent"
                         android:text="@string/getting"
                         android:textAlignment="textStart"
-                        android:textColor="@color/light_black"
                         android:textSize="24sp" />
 
                 </LinearLayout>
@@ -281,7 +298,6 @@
                     android:layout_columnWeight="1"
                     android:text="@string/getting"
                     android:textAlignment="center"
-                    android:textColor="@color/light_black"
                     android:textSize="24sp"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -300,7 +316,7 @@
             android:layout_marginStart="20dp"
             android:layout_marginBottom="5dp"
             android:orientation="vertical"
-            app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+            app:layout_constraintBottom_toTopOf="@+id/card_ll_daily_weather_background"
             app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground">
 
             <!-- 当前温度 -->
@@ -316,10 +332,10 @@
                     android:layout_height="wrap_content"
                     android:shadowColor="@color/shadow_black"
                     android:shadowRadius="20"
-                    android:text="16"
+                    android:text=""
                     android:textColor="@color/light_white"
                     android:textSize="60sp"
-                    app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+                    app:layout_constraintBottom_toTopOf="@+id/card_ll_daily_weather_background"
                     app:layout_constraintStart_toStartOf="@+id/iv_cardWeatherBackground"
                     tools:ignore="HardcodedText" />
 
@@ -333,7 +349,7 @@
                     android:text="@string/centigrade"
                     android:textColor="@color/light_white"
                     android:textSize="32sp"
-                    app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+                    app:layout_constraintBottom_toTopOf="@+id/card_ll_daily_weather_background"
                     app:layout_constraintStart_toEndOf="@+id/textView" />
 
             </LinearLayout>
@@ -367,7 +383,7 @@
                     android:layout_width="18sp"
                     android:layout_height="18sp"
                     android:layout_marginStart="5dp"
-                    android:src="@mipmap/aqi_great_icon"
+                    android:src="@color/translation"
                     tools:ignore="ContentDescription" />
 
             </LinearLayout>

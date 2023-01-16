@@ -50,27 +50,45 @@
     <string name="WDn">北风</string>
 
     <string name="WS99">未知风强</string>
-    <string name="WS0">0 级 无风</string>
-    <string name="WS1">1 级 微风徐徐</string>
-    <string name="WS2">2 级 清风</string>
-    <string name="WS3">3 级 树叶摇摆</string>
-    <string name="WS4">4 级 树枝摇动</string>
-    <string name="WS5">5 级 风力强劲</string>
-    <string name="WS6">6 级 风力强劲</string>
-    <string name="WS7">7 级 风力超强</string>
-    <string name="WS8">8 级 狂风大作</string>
-    <string name="WS9">9 级 狂风呼啸</string>
-    <string name="WS10">10 级 暴风毁树</string>
-    <string name="WS11">11 级 暴风毁树</string>
-    <string name="WS12">12 级 飓风</string>
-    <string name="WS13">13 级 台风</string>
-    <string name="WS14">14 级 强台风</string>
-    <string name="WS15">15 级 强台风</string>
-    <string name="WS16">16 级 超强台风</string>
-    <string name="WS17">17 级 超强台风</string>
-    
+    <string name="WS0">无风</string>
+    <string name="WS1">一级</string>
+    <string name="WS2">二级</string>
+    <string name="WS3">三级</string>
+    <string name="WS4">四级</string>
+    <string name="WS5">五级</string>
+    <string name="WS6">六级</string>
+    <string name="WS7">七级</string>
+    <string name="WS8">八级</string>
+    <string name="WS9">九级</string>
+    <string name="WS10">十级</string>
+    <string name="WS11">十一级</string>
+    <string name="WS12">十二级</string>
+    <string name="WS13">十三级</string>
+    <string name="WS14">十四级</string>
+    <string name="WS15">十五级</string>
+    <string name="WS16">十六级</string>
+    <string name="WS17">十七级</string>
+
+    <string name="WSDesc1">微风徐徐</string>
+    <string name="WSDesc2">清风</string>
+    <string name="WSDesc3">树叶摇摆</string>
+    <string name="WSDesc4">树枝摇动</string>
+    <string name="WSDesc5">风力强劲</string>
+    <string name="WSDesc6">风力强劲</string>
+    <string name="WSDesc7">风力超强</string>
+    <string name="WSDesc8">狂风大作</string>
+    <string name="WSDesc9">狂风呼啸</string>
+    <string name="WSDesc10">暴风毁树</string>
+    <string name="WSDesc11">暴风毁树</string>
+    <string name="WSDesc12">飓风</string>
+    <string name="WSDesc13">台风</string>
+    <string name="WSDesc14">强台风</string>
+    <string name="WSDesc15">强台风</string>
+    <string name="WSDesc16">超强台风</string>
+    <string name="WSDesc17">超强台风</string>
+
     <!-- 预警名称 -->
-    
+
     <string name="EWN01">台风</string>
     <string name="EWN02">暴雨</string>
     <string name="EWN03">暴雪</string>
@@ -85,6 +103,10 @@
     <string name="EWN12">大雾</string>
     <string name="EWN13">霾</string>
     <string name="EWN14">道路结冰</string>
+    <string name="EWN15">森林火险</string>
+    <string name="EWN16">雷雨大风</string>
+    <string name="EWN17">春季沙尘</string>
+    <string name="EWN18">沙尘</string>
 
     <!-- 预警等级 -->
 
@@ -98,7 +120,7 @@
     <string name="centigrade">℃</string>
     <string name="update">更新</string>
 
-    <string name="getting">正在获取</string>
+    <string name="getting"> </string>
 
     <string name="AQI">空气指数</string>
     <string name="excellent">优</string>
@@ -127,5 +149,13 @@
     <string name="back">返回</string>
     <string name="search">搜索</string>
     <string name="city_name">城市名</string>
+    <string name="yesterday_weather">昨日天气</string>
+    <string name="win_info">风力信息</string>
+    <string name="other_details">详细信息</string>
+    <string name="alert_info">预警信息</string>
+    <string name="no_alert">暂无预警</string>
+    <string name="no_alert_desc">享受生活吧</string>
+    <string name="sun_rise_and_fall">日起日落</string>
+    <string name="real_time">实时：</string>
 
 </resources>

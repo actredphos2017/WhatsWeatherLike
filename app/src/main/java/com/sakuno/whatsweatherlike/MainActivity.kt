@@ -13,13 +13,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.util.TypedValue
-import android.view.Gravity
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.*
 import android.view.animation.AnimationUtils
 import android.widget.EditText
 import android.widget.ImageButton
@@ -41,6 +39,7 @@ import java.io.IOException
 import java.io.InputStreamReader
 import java.util.*
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
 
@@ -67,6 +66,8 @@ class MainActivity : Activity() {
     private var mainCardView: ViewPager2? = null
 
     private var fleshDefaultIndex: Int = 0
+
+    private var mutableCardView: MutableMap<Int, View> = mutableMapOf()
 
     private var customCitiesFromPreferences: CustomCities
         get() = Gson().fromJson(
@@ -280,9 +281,6 @@ class MainActivity : Activity() {
         }
 
         addCityDialog = Dialog(this@MainActivity, R.style.dialog_bottom_full)
-
-        val view = View.inflate(this@MainActivity, R.layout.add_city_dialog, null)
-
         addCityDialog!!.setCanceledOnTouchOutside(true)
         addCityDialog!!.setCancelable(true)
 
@@ -290,13 +288,13 @@ class MainActivity : Activity() {
         window.setGravity(Gravity.BOTTOM)
         window.setWindowAnimations(R.style.share_animation)
 
-        view.findViewById<ImageButton>(R.id.addcity_btn_back).setOnClickListener {
-            addCityDialog!!.hide()
+        View.inflate(this@MainActivity, R.layout.add_city_dialog, null).run {
+            findViewById<ImageButton>(R.id.addcity_btn_back).setOnClickListener {
+                addCityDialog!!.hide()
+            }
+            initAddCityView(this)
+            window.setContentView(this)
         }
-
-        initAddCityView(view)
-
-        window.setContentView(view)
         window.setLayout(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT
         )
@@ -306,63 +304,136 @@ class MainActivity : Activity() {
 
     private fun initAddCityView(view: View) {
 
+        view.findViewById<LinearLayout>(R.id.addcity_ll_background).background = getDrawable(
+            this, if (nightMode) R.drawable.night_mode_half_radius_rectangle
+            else R.drawable.day_mode_half_radius_rectangle
+        )
+
         val searchResultLayout = view.findViewById<LinearLayout>(R.id.addcity_ll_search_result)
 
-        view.findViewById<ImageButton>(R.id.addcity_btn_search).setOnClickListener {
-            val searchKey = view.findViewById<EditText>(R.id.addcity_et_city_name).text.toString()
-
-            if (searchKey.isEmpty()) {
-                AlertDialog.Builder(this@MainActivity).setTitle("提示").setMessage("请输入城市名")
-                    .setPositiveButton("确定") { _, _ -> }.create().show()
-                return@setOnClickListener
-            }
-
-            searchResultLayout.removeAllViews()
-
-            for (each in cityList!!.searchCity(searchKey)) {
-                val resultView =
-                    View.inflate(this@MainActivity, R.layout.add_city_result_item, null)
-
-                resultView.isClickable = true
-
-                val layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp2px(64)
-                )
-
-                layoutParams.setMargins(0, dp2px(4), 0, dp2px(4))
-
-                resultView.layoutParams = layoutParams
-
-                resultView.findViewById<TextView>(R.id.addcityres_tv_result_name).text =
-                    each.showName
-                resultView.findViewById<TextView>(R.id.addcityres_tv_longitude).text =
-                    each.longitude.toString()
-                resultView.findViewById<TextView>(R.id.addcityres_tv_latitude).text =
-                    each.latitude.toString()
-
-                resultView.setOnClickListener {
-                    val sameCityIndex = customCityList!!.cities.indexOf(each)
-                    if (sameCityIndex >= 0) {
-                        AlertDialog.Builder(this@MainActivity).setTitle("提示")
-                            .setMessage("该城市已存在，详见第 ${sameCityIndex + 1} 张卡片")
-                            .setPositiveButton("确定") { _, _ ->
-                                fleshDefaultIndex = sameCityIndex
-                                fleshData()
-                                addCityDialog!!.hide()
-                            }.show()
-                    } else {
-                        addCity(each)
-                        fleshDefaultIndex = customCityList!!.cities.size - 1
-                        fleshData()
-                        addCityDialog!!.hide()
-                    }
+        view.findViewById<EditText>(R.id.addcity_et_city_name)
+            .addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(
+                    s: CharSequence?, start: Int, count: Int, after: Int
+                ) {
                 }
 
-                searchResultLayout.addView(resultView)
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(textView: Editable?) {
+                    val searchKey = textView.toString()
+
+                    if (searchKey.isEmpty()) {
+                        return
+                    }
+
+                    searchResultLayout.removeAllViews()
+
+                    val searchRes = cityList!!.searchCity(searchKey)
+
+                    if (searchRes.isEmpty()) {
+                        return
+                    }
+
+                    for (each in searchRes) View.inflate(
+                        this@MainActivity, R.layout.add_city_result_item, null
+                    ).run {
+                        isClickable = true
+                        layoutParams = LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, dp2px(64)
+                        ).run {
+                            setMargins(0, dp2px(4), 0, dp2px(4))
+                            this
+                        }
+                        findViewById<TextView>(R.id.addcityres_tv_result_name).text = each.showName
+                        findViewById<TextView>(R.id.addcityres_tv_longitude).text =
+                            each.longitude.toString()
+                        findViewById<TextView>(R.id.addcityres_tv_latitude).text =
+                            each.latitude.toString()
+
+                        setOnClickListener {
+                            val sameCityIndex = customCityList!!.cities.indexOf(each)
+                            if (sameCityIndex >= 0) {
+                                AlertDialog.Builder(this@MainActivity).setTitle("提示")
+                                    .setMessage("该城市已存在，详见第 ${sameCityIndex + 1} 张卡片")
+                                    .setPositiveButton("确定") { _, _ ->
+                                        fleshDefaultIndex = sameCityIndex
+                                        fleshData()
+                                        addCityDialog!!.hide()
+                                    }.show()
+                            } else {
+                                addCity(each)
+                                fleshDefaultIndex = customCityList!!.cities.size - 1
+                                fleshData()
+                                addCityDialog!!.hide()
+                            }
+                        }
+                        searchResultLayout.addView(this)
+                    }
+
+                    return
+                }
+            })
+
+        view.findViewById<EditText>(R.id.addcity_et_city_name)
+            .setOnEditorActionListener { textView, _, _ ->
+
+                val searchKey = textView.text.toString()
+
+                if (searchKey.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "城市名不能为空", Toast.LENGTH_SHORT).show()
+                    return@setOnEditorActionListener true
+                }
+
+                searchResultLayout.removeAllViews()
+
+                val searchRes = cityList!!.searchCity(searchKey)
+
+                if (searchRes.isEmpty()) {
+                    Toast.makeText(this@MainActivity, "搜索结果为空", Toast.LENGTH_SHORT).show()
+                    return@setOnEditorActionListener true
+                }
+
+                for (each in searchRes) View.inflate(
+                    this@MainActivity, R.layout.add_city_result_item, null
+                ).run {
+                    isClickable = true
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp2px(64)
+                    ).run {
+                        setMargins(0, dp2px(4), 0, dp2px(4))
+                        this
+                    }
+                    findViewById<TextView>(R.id.addcityres_tv_result_name).text = each.showName
+                    findViewById<TextView>(R.id.addcityres_tv_longitude).text =
+                        each.longitude.toString()
+                    findViewById<TextView>(R.id.addcityres_tv_latitude).text =
+                        each.latitude.toString()
+
+                    setOnClickListener {
+                        val sameCityIndex = customCityList!!.cities.indexOf(each)
+                        if (sameCityIndex >= 0) {
+                            AlertDialog.Builder(this@MainActivity).setTitle("提示")
+                                .setMessage("该城市已存在，详见第 ${sameCityIndex + 1} 张卡片")
+                                .setPositiveButton("确定") { _, _ ->
+                                    fleshDefaultIndex = sameCityIndex
+                                    fleshData()
+                                    addCityDialog!!.hide()
+                                }.show()
+                        } else {
+                            addCity(each)
+                            fleshDefaultIndex = customCityList!!.cities.size - 1
+                            fleshData()
+                            addCityDialog!!.hide()
+                        }
+                    }
+                    searchResultLayout.addView(this)
+                }
+
+                return@setOnEditorActionListener false
             }
-        }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initDetailInfo(model: CityWeatherModel, view: View) {
         view.findViewById<LinearLayout>(R.id.detail_ll_background).background =
             getDrawable(this@MainActivity,
@@ -635,6 +706,72 @@ class MainActivity : Activity() {
             } else {
                 "${startIndexes[0]}分钟后将会有雨"
             }
+
+
+            // init alert card
+
+            weather.alert.content.run {
+                if (this.isEmpty()) {
+                    view.findViewById<TextView>(R.id.detail_tv_alert_title).text =
+                        getStringResource("no_alert")
+                    view.findViewById<TextView>(R.id.detail_tv_alert_desc).text =
+                        getStringResource("no_alert_desc")
+                } else {
+                    view.findViewById<TextView>(R.id.detail_tv_alert_title).text = "${
+                        getStringResource(
+                            "EWN" + get(0).code.substring(0, 2)
+                        )
+                    } ${
+                        getStringResource(
+                            "EWG" + get(0).code.substring(2, 4)
+                        )
+                    }预警${
+                        if (size > 1) " (+${size - 1})"
+                        else ""
+                    }"
+                    view.findViewById<TextView>(R.id.detail_tv_alert_desc).text = get(0).description
+                }
+            }
+
+
+            // init sun rise fall card
+
+            weather.daily.astro.getOrNull(0)?.run {
+                view.findViewById<TextView>(R.id.detail_tv_sun_date).text =
+                    MyTime.MyDateTimeAuxiliary.fromCaiyunDatetimeString(date).toDateString()
+                view.findViewById<TextView>(R.id.detail_tv_sun_rise_time).text = sunrise.time
+                view.findViewById<TextView>(R.id.detail_tv_sun_fall_time).text = sunset.time
+            }
+
+            // init wind forecast card
+
+            weather.realtime.wind.run {
+                view.findViewById<TextView>(R.id.detail_tv_now_wind_info).text = "${
+                    getStringResource(
+                        "WD${
+                            CityWeatherModel.windDirectionIndicator(direction)
+                        }"
+                    )
+                } ${
+                    getStringResource(
+                        "WS${
+                            CityWeatherModel.windStrengthIndicator(speed)
+                        }"
+                    )
+                } $speed m/s"
+            }
+
+
+            val windStrengthDataList = mutableListOf<Double>()
+            for (each in weather.hourly.wind) {
+                windStrengthDataList += each.speed
+                Log.d("WindLineChart", "insertData: $each")
+            }
+
+            view.findViewById<LineChartForWindForecast>(R.id.detail_lc_wind_forecast).run {
+                setDataArray(windStrengthDataList.toDoubleArray())
+                applyChanges()
+            }
         }
     }
 
@@ -642,9 +779,15 @@ class MainActivity : Activity() {
         private var list: List<City>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
-        inner class UserCitiesViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        inner class UserCitiesViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
+
+            private var updateTime: MyTime? = null
 
             private var detailDialog: Dialog? = null
+
+            private val isLocalIV: ImageView = view.findViewById(R.id.card_iv_is_local)
+
+            private val isFavoriteIV: ImageView = view.findViewById(R.id.card_iv_favorite)
 
             private val cityNameTV: TextView = view.findViewById(R.id.tv_cityTitle)
 
@@ -654,7 +797,7 @@ class MainActivity : Activity() {
 
             private val nowAqiTV: TextView = view.findViewById(R.id.tv_aqi)
 
-            private val newAqiGradeIV: ImageView = view.findViewById(R.id.iv_aqiGrade)
+            private val nowAqiGradeIV: ImageView = view.findViewById(R.id.iv_aqiGrade)
 
             private val nowWeatherTV: TextView = view.findViewById(R.id.tv_nowWeather)
 
@@ -677,6 +820,8 @@ class MainActivity : Activity() {
 
             private val tomorrowWeatherIV: ImageView = view.findViewById(R.id.iv_tomorrowWeather)
 
+            private val backgroundLL: LinearLayout =
+                view.findViewById(R.id.card_ll_daily_weather_background)
 
             private val weekDayOfDayAfterTomorrowTV: TextView =
                 view.findViewById(R.id.tv_weekDayOfDayAfterTomorrow)
@@ -695,13 +840,18 @@ class MainActivity : Activity() {
             private fun initDetailDynamicElement(index: Int, view: View) {
 
                 runOnUiThread {
-                    view.findViewById<ImageButton>(R.id.detail_ib_collection)?.run {
-                        if (favoriteCityIndex == index) setImageResource(R.drawable.star_fill)
+                    view.findViewById<ImageButton>(R.id.detail_ib_favorite)?.run {
+                        if (favoriteCityIndex == index) setImageResource(R.drawable.icon_star_fill)
                         else {
-                            setImageResource(R.drawable.star)
+                            setImageResource(R.drawable.icon_star)
                             setOnClickListener {
-                                setImageResource(R.drawable.star_fill)
+                                setImageResource(R.drawable.icon_star_fill)
                                 favoriteCityIndex = index
+                                val mainIndex = favoriteCityIndex
+                                for ((key, value) in mutableCardView) value.findViewById<ImageView>(
+                                    R.id.card_iv_favorite
+                                ).visibility =
+                                    if (key == mainIndex) View.VISIBLE else View.INVISIBLE
                             }
                         }
                     }
@@ -710,6 +860,8 @@ class MainActivity : Activity() {
 
             @SuppressLint("SetTextI18n")
             fun build(position: City, index: Int) {
+
+                mutableCardView[index] = view
 
                 Thread {
 
@@ -770,6 +922,13 @@ class MainActivity : Activity() {
                             }
                     }
 
+                    updateTime = MyTime.fromString(model.updateTime)
+
+                    val isLocal = if (index == 0) View.VISIBLE else View.INVISIBLE
+
+                    val isFavorite =
+                        if (index == favoriteCityIndex) View.VISIBLE else View.INVISIBLE
+
                     val weather = model.weatherInfo!!.result
 
                     val preResWD = getStringResource(
@@ -780,13 +939,21 @@ class MainActivity : Activity() {
                         }"
                     )
 
-                    val preResWS = getStringResource(
-                        "WS${
-                            CityWeatherModel.windStrengthIndicator(
-                                weather.realtime.wind.speed
+                    val preResWS = weather.realtime.wind.speed.run {
+                        "${
+                            getStringResource(
+                                "WS${
+                                    CityWeatherModel.windStrengthIndicator(this)
+                                }"
+                            )
+                        } ${
+                            getStringResource(
+                                "WSDesc${
+                                    CityWeatherModel.windStrengthIndicator(this)
+                                }"
                             )
                         }"
-                    )
+                    }
 
                     val preResBackgroundAnim = AnimationUtils.loadAnimation(
                         this@MainActivity, R.anim.focusing_show
@@ -796,6 +963,11 @@ class MainActivity : Activity() {
                         CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
                             CityWeatherModel.TIME_NORMAL
                         )
+
+                    val preNowAqiGrade =
+                        CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn)
+                    val preNowTemper = weather.realtime.temperature.roundToInt().toString()
+                    val preNowAqi = weather.realtime.airQuality.aqi.chn.toString()
 
                     val preResTodaySkyCon = getStringResource(weather.daily.skycon[0].value)
                     val preResTodayTemper =
@@ -820,12 +992,20 @@ class MainActivity : Activity() {
                         weather.daily.skycon[2].value
                     )
 
+                    val backgroundDrawable = getDrawable(
+                        this@MainActivity, if (nightMode) R.drawable.night_mode_radius_rectangle
+                        else R.drawable.day_mode_radius_rectangle
+                    )
+
                     runOnUiThread {
+                        backgroundLL.background = backgroundDrawable
                         cityNameTV.text = model.cityName
+                        isLocalIV.visibility = isLocal
+                        isFavoriteIV.visibility = isFavorite
                         updateTimeTV.text = model.updateTime
-                        nowTemperTV.text = weather.realtime.temperature.toString()
-                        nowAqiTV.text = weather.realtime.airQuality.aqi.chn.toString()
-                        newAqiGradeIV.setImageResource(CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn))
+                        nowTemperTV.text = preNowTemper
+                        nowAqiTV.text = preNowAqi
+                        nowAqiGradeIV.setImageResource(preNowAqiGrade)
                         nowWeatherTV.text = getStringResource(weather.realtime.skycon)
                         nowWindDirectionTV.text = preResWD
                         nowWindStrengthTV.text = preResWS

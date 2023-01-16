@@ -46,9 +46,43 @@ data class Alert(
     @SerializedName("adcodes")
     val adcodes: List<Adcode>,
     @SerializedName("content")
-    val content: List<Any>,
+    val content: List<AlertInfo>,
     @SerializedName("status")
     val status: String
+)
+
+data class AlertInfo(
+    @SerializedName("province")
+    val province: String,
+    @SerializedName("status")
+    val status: String,
+    @SerializedName("code")
+    val code: String,
+    @SerializedName("description")
+    val description: String,
+    @SerializedName("regionId")
+    val regionId: String,
+    @SerializedName("county")
+    val county: String,
+    @SerializedName("pubtimestamp")
+    val pubtimestamp: Long,
+    @SerializedName("latlon")
+    val latlon: List<Double>,
+    @SerializedName("city")
+    val city: String,
+    @SerializedName("alertId")
+    val alertId: String,
+    @SerializedName("title")
+    val title: String,
+    @SerializedName("adcode")
+    val adcode: String,
+    @SerializedName("source")
+    val source: String,
+    @SerializedName("location")
+    val location: String,
+    @SerializedName("request_status")
+    val request_status: String,
+
 )
 
 data class Daily(

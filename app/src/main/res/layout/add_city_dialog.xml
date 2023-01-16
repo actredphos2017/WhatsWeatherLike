@@ -3,7 +3,8 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/day_mode_half_radius_rectangle"
+    android:id="@+id/addcity_ll_background"
+    android:background="@color/translation"
     android:paddingHorizontal="20dp"
     android:paddingVertical="20dp">
 
@@ -30,17 +31,8 @@
             android:layout_height="48dp"
             android:inputType="text"
             android:autofillHints="text"
+            android:imeOptions="actionSearch"
             android:hint="@string/city_name"/>
-
-        <ImageButton
-            android:id="@+id/addcity_btn_search"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/white_circle"
-            android:src="@drawable/icon_search"
-            android:layout_gravity="center"
-            android:scaleType="center"
-            android:contentDescription="@string/search" />
 
     </GridLayout>
 

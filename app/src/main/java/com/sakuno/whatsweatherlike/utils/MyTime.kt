@@ -84,8 +84,7 @@ data class MyTime(
         return hour * 60 + min
     }
 
-    @JvmOverloads
-    fun intervalTo(value: MyTime, lessThen12h: Boolean = true): Int =
+    fun intervalTo(value: MyTime): Int =
         MyTime(hour - value.hour, min - value.min).check().run {
             while (this@run.toSumMin() > 720)
                 this@run.hour -= 12
