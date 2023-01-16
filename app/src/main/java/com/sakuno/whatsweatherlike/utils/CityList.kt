@@ -22,7 +22,7 @@ data class CityList(
             City(
                 longitude = (getOrNull(0))?.toDouble() ?: 110.0,
                 latitude = (getOrNull(1))?.toDouble() ?: 20.0,
-                showName = (ori.second + " ").takeIf { it != " " } + ori.first.name,
+                showName = (if(ori.second.isBlank()) "" else "${ori.second} ") + ori.first.name,
                 isLocal = false
             )
         }

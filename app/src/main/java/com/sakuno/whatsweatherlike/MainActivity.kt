@@ -14,6 +14,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -289,11 +290,15 @@ class MainActivity : Activity() {
         window.setGravity(Gravity.BOTTOM)
         window.setWindowAnimations(R.style.share_animation)
 
+        view.findViewById<ImageButton>(R.id.addcity_btn_back).setOnClickListener {
+            addCityDialog!!.hide()
+        }
+
         initAddCityView(view)
 
         window.setContentView(view)
         window.setLayout(
-            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
+            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT
         )
 
         return addCityDialog
@@ -320,9 +325,13 @@ class MainActivity : Activity() {
 
                 resultView.isClickable = true
 
-                resultView.layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT
+                val layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp2px(64)
                 )
+
+                layoutParams.setMargins(0, dp2px(4), 0, dp2px(4))
+
+                resultView.layoutParams = layoutParams
 
                 resultView.findViewById<TextView>(R.id.addcityres_tv_result_name).text =
                     each.showName
@@ -332,10 +341,21 @@ class MainActivity : Activity() {
                     each.latitude.toString()
 
                 resultView.setOnClickListener {
-                    addCity(each)
-                    fleshDefaultIndex = customCityList!!.cities.size - 1
-                    fleshData()
-                    addCityDialog!!.hide()
+                    val sameCityIndex = customCityList!!.cities.indexOf(each)
+                    if (sameCityIndex >= 0) {
+                        AlertDialog.Builder(this@MainActivity).setTitle("提示")
+                            .setMessage("该城市已存在，详见第 ${sameCityIndex + 1} 张卡片")
+                            .setPositiveButton("确定") { _, _ ->
+                                fleshDefaultIndex = sameCityIndex
+                                fleshData()
+                                addCityDialog!!.hide()
+                            }.show()
+                    } else {
+                        addCity(each)
+                        fleshDefaultIndex = customCityList!!.cities.size - 1
+                        fleshData()
+                        addCityDialog!!.hide()
+                    }
                 }
 
                 searchResultLayout.addView(resultView)
@@ -631,28 +651,42 @@ class MainActivity : Activity() {
             private val updateTimeTV: TextView = view.findViewById(R.id.tv_updateTime)
 
             private val nowTemperTV: TextView = view.findViewById(R.id.tv_nowTemper)
+
             private val nowAqiTV: TextView = view.findViewById(R.id.tv_aqi)
+
             private val newAqiGradeIV: ImageView = view.findViewById(R.id.iv_aqiGrade)
+
             private val nowWeatherTV: TextView = view.findViewById(R.id.tv_nowWeather)
+
             private val nowWindDirectionTV: TextView = view.findViewById(R.id.tv_windDirection)
+
             private val nowWindStrengthTV: TextView = view.findViewById(R.id.tv_windStrength)
+
             private val nowWeatherBackground: ImageView =
                 view.findViewById(R.id.iv_cardWeatherBackground)
 
             private val todayWeatherTV: TextView = view.findViewById(R.id.tv_todayWeather)
+
             private val todayTemperTV: TextView = view.findViewById(R.id.tv_todayTemper)
+
             private val todayWeatherIV: ImageView = view.findViewById(R.id.iv_todayWeather)
 
             private val tomorrowWeatherTV: TextView = view.findViewById(R.id.tv_tomorrowWeather)
+
             private val tomorrowTemperTV: TextView = view.findViewById(R.id.tv_tomorrowTemper)
+
             private val tomorrowWeatherIV: ImageView = view.findViewById(R.id.iv_tomorrowWeather)
+
 
             private val weekDayOfDayAfterTomorrowTV: TextView =
                 view.findViewById(R.id.tv_weekDayOfDayAfterTomorrow)
+
             private val dayAfterTomorrowWeatherTV: TextView =
                 view.findViewById(R.id.tv_dayAfterTomorrowWeather)
+
             private val dayAfterTomorrowTemperTV: TextView =
                 view.findViewById(R.id.tv_dayAfterTomorrowTemper)
+
             private val dayAfterTomorrowWeatherIV: ImageView =
                 view.findViewById(R.id.iv_dayAfterTomorrowWeather)
 
@@ -672,7 +706,6 @@ class MainActivity : Activity() {
                         }
                     }
                 }
-
             }
 
             @SuppressLint("SetTextI18n")
@@ -692,6 +725,7 @@ class MainActivity : Activity() {
                             else AlertDialog.Builder(this@MainActivity).setTitle("提示")
                                 .setMessage("确认删除该城市？").setPositiveButton("删除") { _, _ ->
                                     removeCity(index)
+                                    fleshDefaultIndex = favoriteCityIndex
                                     fleshData()
                                 }.setNegativeButton("取消") { _, _ ->
 
@@ -738,6 +772,54 @@ class MainActivity : Activity() {
 
                     val weather = model.weatherInfo!!.result
 
+                    val preResWD = getStringResource(
+                        "WD${
+                            CityWeatherModel.windDirectionIndicator(
+                                weather.realtime.wind.direction
+                            )
+                        }"
+                    )
+
+                    val preResWS = getStringResource(
+                        "WS${
+                            CityWeatherModel.windStrengthIndicator(
+                                weather.realtime.wind.speed
+                            )
+                        }"
+                    )
+
+                    val preResBackgroundAnim = AnimationUtils.loadAnimation(
+                        this@MainActivity, R.anim.focusing_show
+                    )
+
+                    val preResBackground =
+                        CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
+                            CityWeatherModel.TIME_NORMAL
+                        )
+
+                    val preResTodaySkyCon = getStringResource(weather.daily.skycon[0].value)
+                    val preResTodayTemper =
+                        "${weather.daily.temperature[0].max.toInt()} / ${weather.daily.temperature[0].min.toInt()} ℃"
+                    val preResTodayImage =
+                        CityWeatherModel.toWeatherIcon(weather.daily.skycon[0].value)
+
+                    val preResTomorrowSkyCon = getStringResource(weather.daily.skycon[1].value)
+                    val preResTomorrowTemper =
+                        "${weather.daily.temperature[1].max.toInt()} / ${weather.daily.temperature[1].min.toInt()} ℃"
+                    val preResTomorrowImage = CityWeatherModel.toWeatherIcon(
+                        weather.daily.skycon[1].value
+                    )
+
+                    val preResDayAfterTomorrowWeekDay =
+                        getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
+                    val preResDayAfterTomorrowSkyCon =
+                        getStringResource(weather.daily.skycon[2].value)
+                    val preResDayAfterTomorrowTemper =
+                        "${weather.daily.temperature[2].max.toInt()} / ${weather.daily.temperature[2].min.toInt()} ℃"
+                    val preResDayAfterTomorrowImage = CityWeatherModel.toWeatherIcon(
+                        weather.daily.skycon[2].value
+                    )
+
                     runOnUiThread {
                         cityNameTV.text = model.cityName
                         updateTimeTV.text = model.updateTime
@@ -745,63 +827,20 @@ class MainActivity : Activity() {
                         nowAqiTV.text = weather.realtime.airQuality.aqi.chn.toString()
                         newAqiGradeIV.setImageResource(CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn))
                         nowWeatherTV.text = getStringResource(weather.realtime.skycon)
-                        nowWindDirectionTV.text = getStringResource(
-                            "WD${
-                                CityWeatherModel.windDirectionIndicator(
-                                    weather.realtime.wind.direction
-                                )
-                            }"
-                        )
-                        nowWindStrengthTV.text = getStringResource(
-                            "WS${
-                                CityWeatherModel.windStrengthIndicator(
-                                    weather.realtime.wind.speed
-                                )
-                            }"
-                        )
-
-                        nowWeatherBackground.startAnimation(
-                            AnimationUtils.loadAnimation(
-                                this@MainActivity, R.anim.focusing_show
-                            )
-                        )
-
-                        nowWeatherBackground.setImageResource(
-                            CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
-                                CityWeatherModel.TIME_NORMAL
-                            )
-                        )
-
-
-                        todayWeatherTV.text = getStringResource(weather.daily.skycon[0].value)
-
-                        todayTemperTV.text =
-                            "${weather.daily.temperature[0].max.toInt()} / ${weather.daily.temperature[0].min.toInt()} ℃"
-
-                        todayWeatherIV.setImageResource(CityWeatherModel.toWeatherIcon(weather.daily.skycon[0].value))
-
-                        tomorrowWeatherTV.text = getStringResource(weather.daily.skycon[1].value)
-
-                        tomorrowTemperTV.text =
-                            "${weather.daily.temperature[1].max.toInt()} / ${weather.daily.temperature[1].min.toInt()} ℃"
-
-                        tomorrowWeatherIV.setImageResource(
-                            CityWeatherModel.toWeatherIcon(
-                                weather.daily.skycon[1].value
-                            )
-                        )
-
-                        weekDayOfDayAfterTomorrowTV.text =
-                            getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
-                        dayAfterTomorrowWeatherTV.text =
-                            getStringResource(weather.daily.skycon[2].value)
-                        dayAfterTomorrowTemperTV.text =
-                            "${weather.daily.temperature[2].max.toInt()} / ${weather.daily.temperature[2].min.toInt()} ℃"
-                        dayAfterTomorrowWeatherIV.setImageResource(
-                            CityWeatherModel.toWeatherIcon(
-                                weather.daily.skycon[2].value
-                            )
-                        )
+                        nowWindDirectionTV.text = preResWD
+                        nowWindStrengthTV.text = preResWS
+                        nowWeatherBackground.startAnimation(preResBackgroundAnim)
+                        nowWeatherBackground.setImageResource(preResBackground)
+                        todayWeatherTV.text = preResTodaySkyCon
+                        todayTemperTV.text = preResTodayTemper
+                        todayWeatherIV.setImageResource(preResTodayImage)
+                        tomorrowWeatherTV.text = preResTomorrowSkyCon
+                        tomorrowTemperTV.text = preResTomorrowTemper
+                        tomorrowWeatherIV.setImageResource(preResTomorrowImage)
+                        weekDayOfDayAfterTomorrowTV.text = preResDayAfterTomorrowWeekDay
+                        dayAfterTomorrowWeatherTV.text = preResDayAfterTomorrowSkyCon
+                        dayAfterTomorrowTemperTV.text = preResDayAfterTomorrowTemper
+                        dayAfterTomorrowWeatherIV.setImageResource(preResDayAfterTomorrowImage)
 
                         val dialogInitResult = initDetailDialog(model)
 
@@ -812,8 +851,6 @@ class MainActivity : Activity() {
                             }
                         }
                     }
-
-
                 }.start()
             }
 
@@ -831,7 +868,8 @@ class MainActivity : Activity() {
                     available = false
                 }
 
-                view.findViewById<ImageButton>(R.id.detail_ib_back).setOnClickListener { detailDialog!!.hide() }
+                view.findViewById<ImageButton>(R.id.detail_ib_back)
+                    .setOnClickListener { detailDialog!!.hide() }
 
                 detailDialog!!.setCanceledOnTouchOutside(true)
                 detailDialog!!.setCancelable(true)
@@ -877,5 +915,9 @@ class MainActivity : Activity() {
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
             ?.run(::getString) ?: ""
+
+    private fun dp2px(v: Int): Int = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics
+    ).toInt()
 
 }

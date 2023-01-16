@@ -292,10 +292,8 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
                         }
                     }
                 }
-
             }
         }
-
     }
 
     private fun dp2px(v: Float): Float =

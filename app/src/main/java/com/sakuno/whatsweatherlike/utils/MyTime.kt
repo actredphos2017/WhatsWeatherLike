@@ -1,5 +1,7 @@
 package com.sakuno.whatsweatherlike.utils
 
+import java.util.Calendar
+
 data class MyTime(
     var hour: Int, var min: Int
 ) {
@@ -34,6 +36,8 @@ data class MyTime(
                 0, 0
             )
 
+        fun now(): MyTime =
+            Calendar.getInstance().run { MyTime(get(Calendar.HOUR), get(Calendar.MINUTE)) }
     }
 
     data class MyDateTimeAuxiliary(
@@ -51,6 +55,7 @@ data class MyTime(
                     )
                 }
         }
+
         fun toDateString() = "${month}月${day}日"
 
     }
@@ -74,6 +79,18 @@ data class MyTime(
 
         return this
     }
+
+    fun toSumMin(): Int {
+        return hour * 60 + min
+    }
+
+    @JvmOverloads
+    fun intervalTo(value: MyTime, lessThen12h: Boolean = true): Int =
+        MyTime(hour - value.hour, min - value.min).check().run {
+            while (this@run.toSumMin() > 720)
+                this@run.hour -= 12
+            this@run.toSumMin()
+        }
 
     operator fun plus(value: MyTime): MyTime = MyTime(hour + value.hour, min + value.min)
 
