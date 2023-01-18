@@ -33,9 +33,15 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.baidu.location.LocationClient
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import com.google.gson.Gson
 import com.sakuno.whatsweatherlike.customwidgets.*
 import com.sakuno.whatsweatherlike.utils.*
+import jp.wasabeef.glide.transformations.BlurTransformation
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -69,9 +75,12 @@ class MainActivity : Activity() {
 
     private var fleshDefaultIndex: Int = 0
 
-    private var mutableCardView: MutableMap<Int, View> = mutableMapOf()
+    private var mutableCardView: MutableMap<Int, UserCitiesAdapter.UserCitiesViewHolder> =
+        mutableMapOf()
 
     private var refreshLayout: BetterSwipeRefreshLayout? = null
+
+    private var backgroundImageView: ImageView? = null
 
     private var customCitiesFromPreferences: CustomCities
         get() = Gson().fromJson(
@@ -175,13 +184,42 @@ class MainActivity : Activity() {
             isRefreshing = true
             fleshData()
         }
+
+        mainCardView!!.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageScrollStateChanged(state: Int) {
+                super.onPageScrollStateChanged(state)
+                when (state) {
+                    ViewPager2.SCROLL_STATE_DRAGGING -> skipUpdateBackground = true
+                    ViewPager2.SCROLL_STATE_IDLE -> waitingForUpdateBackground()
+                    ViewPager2.SCROLL_STATE_SETTLING -> {}
+                }
+            }
+        })
+
+        backgroundImageView = findViewById(R.id.iv_background)
+    }
+
+    private var skipUpdateBackground = false
+
+    private fun waitingForUpdateBackground() {
+        skipUpdateBackground = false
+        Thread {
+            val tempItem = mainCardView!!.currentItem
+            while (mutableCardView[tempItem]?.renderDone != true) {
+                Thread.sleep(100)
+                if (skipUpdateBackground) return@Thread
+            }
+            runOnUiThread {
+                mutableCardView[tempItem]!!.backgroundUrl?.let(::setBlurBitmap)
+            }
+        }.start()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
             3 -> {
-                if(resultCode != 1){
+                if (resultCode != 1) {
                     customCityList = customCitiesFromPreferences
                     fleshDefaultIndex = favoriteCityIndex
                     fleshData()
@@ -283,6 +321,8 @@ class MainActivity : Activity() {
 
         mainCardView!!.currentItem = fleshDefaultIndex
         fleshDefaultIndex = favoriteCityIndex
+
+        waitingForUpdateBackground()
     }
 
     private fun addCity(city: City) {
@@ -825,7 +865,7 @@ class MainActivity : Activity() {
         private var list: List<City>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
-        inner class UserCitiesViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
+        inner class UserCitiesViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
 
             private var updateTime: MyTime? = null
 
@@ -853,6 +893,8 @@ class MainActivity : Activity() {
 
             private val nowWeatherBackground: ImageView =
                 view.findViewById(R.id.iv_cardWeatherBackground)
+
+            var backgroundUrl: Int? = null
 
             private val todayWeatherTV: TextView = view.findViewById(R.id.tv_todayWeather)
 
@@ -883,6 +925,8 @@ class MainActivity : Activity() {
 
             private val detailBtn: View = view.findViewById(R.id.btn_to_detail)
 
+            var renderDone = false
+
             private fun initDetailDynamicElement(index: Int, view: View) {
 
                 runOnUiThread {
@@ -894,7 +938,7 @@ class MainActivity : Activity() {
                                 setImageResource(R.drawable.icon_star_fill)
                                 favoriteCityIndex = index
                                 val mainIndex = favoriteCityIndex
-                                for ((key, value) in mutableCardView) value.findViewById<ImageView>(
+                                for ((key, value) in mutableCardView) value.view.findViewById<ImageView>(
                                     R.id.card_iv_favorite
                                 ).visibility =
                                     if (key == mainIndex) View.VISIBLE else View.INVISIBLE
@@ -907,7 +951,7 @@ class MainActivity : Activity() {
             @SuppressLint("SetTextI18n")
             fun build(position: City, index: Int) {
 
-                mutableCardView[index] = view
+                mutableCardView[index] = this
 
                 Thread {
 
@@ -1005,10 +1049,9 @@ class MainActivity : Activity() {
                         this@MainActivity, R.anim.focusing_show
                     )
 
-                    val preResBackground =
-                        CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
-                            CityWeatherModel.toTimeRange(MyTime.fromString(model.updateTime))
-                        )
+                    backgroundUrl = CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
+                        CityWeatherModel.toTimeRange(MyTime.fromString(model.updateTime))
+                    )
 
                     val preNowAqiGrade =
                         CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn)
@@ -1043,6 +1086,8 @@ class MainActivity : Activity() {
                         else R.drawable.day_mode_radius_rectangle
                     )
 
+                    renderDone = true
+
                     runOnUiThread {
                         backgroundLL.background = backgroundDrawable
                         cityNameTV.text = model.cityName
@@ -1056,7 +1101,7 @@ class MainActivity : Activity() {
                         nowWindDirectionTV.text = preResWD
                         nowWindStrengthTV.text = preResWS
                         nowWeatherBackground.startAnimation(preResBackgroundAnim)
-                        nowWeatherBackground.setImageResource(preResBackground)
+                        nowWeatherBackground.setImageResource(backgroundUrl!!)
                         todayWeatherTV.text = preResTodaySkyCon
                         todayTemperTV.text = preResTodayTemper
                         todayWeatherIV.setImageResource(preResTodayImage)
@@ -1138,6 +1183,31 @@ class MainActivity : Activity() {
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
             ?.run(::getString) ?: ""
+
+    private var oldBackgroundDrawable: Drawable? = null
+
+    private fun setBlurBitmap(bitmapUrl: Int) {
+        Glide.with(applicationContext).load(bitmapUrl).run {
+            apply(
+                RequestOptions.bitmapTransform(
+                    BlurTransformation(20, 3)
+                )
+            ).transition(withCrossFade()).placeholder(oldBackgroundDrawable).into(backgroundImageView!!)
+        }
+
+        Glide.with(applicationContext).load(bitmapUrl).apply(
+            RequestOptions.bitmapTransform(
+                BlurTransformation(9, 3)
+            )
+        ).into(object : CustomTarget<Drawable>() {
+            override fun onResourceReady(
+                resource: Drawable, transition: Transition<in Drawable>?
+            ) {
+                oldBackgroundDrawable = resource
+            }
+            override fun onLoadCleared(placeholder: Drawable?) {}
+        })
+    }
 
     private fun dp2px(v: Int): Int = TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics

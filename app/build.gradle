@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.sakuno.whatsweatherlike'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.sakuno.whatsweatherlike"
         minSdk 26
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
@@ -46,6 +46,10 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     implementation "com.squareup.okhttp3:okhttp:4.10.0"
+
+    implementation ("com.github.bumptech.glide:glide:4.14.2")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
+    implementation('jp.wasabeef:glide-transformations:4.3.0')
 
     implementation 'com.google.code.gson:gson:2.10.1'
 }
