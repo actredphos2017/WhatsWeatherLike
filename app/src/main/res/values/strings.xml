@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WhatsWeatherLike</string>
+    <string name="app_name">卡片天气</string>
     <string name="locating">正在获取</string>
     <string name="today">今天</string>
     <string name="tomorrow">明天</string>
@@ -151,11 +151,12 @@
     <string name="city_name">城市名</string>
     <string name="yesterday_weather">昨日天气</string>
     <string name="win_info">风力信息</string>
-    <string name="other_details">详细信息</string>
+    <string name="other_details">其他信息</string>
     <string name="alert_info">预警信息</string>
     <string name="no_alert">暂无预警</string>
     <string name="no_alert_desc">享受生活吧</string>
     <string name="sun_rise_and_fall">日起日落</string>
     <string name="real_time">实时：</string>
+    <string name="edit_cards">编辑卡片</string>
 
 </resources>

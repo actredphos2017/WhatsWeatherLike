@@ -39,17 +39,10 @@ class LineChartForHourWeather @JvmOverloads constructor(
     var widgetWidth = 0f
     var widgetHeight = 0f
 
-    var systemNightMode = false
-
-    var day_mode_lineColor = Color.BLUE
-    var day_mode_lineBackgroundColor = Color.BLUE
-    var day_mode_textColor = Color.BLACK
-    var day_mode_ringCenterColor = Color.WHITE
-
-    var night_mode_lineColor = Color.BLUE
-    var night_mode_lineBackgroundColor = Color.BLUE
-    var night_mode_textColor = Color.WHITE
-    var night_mode_ringCenterColor = Color.WHITE
+    var lineColor = Color.BLUE
+    var lineBackgroundColor = Color.BLUE
+    var textColor = Color.BLACK
+    var ringCenterColor = Color.WHITE
 
     var maxTemperature: Float = 0f
     var minTemperature: Float = 0f
@@ -154,33 +147,21 @@ class LineChartForHourWeather @JvmOverloads constructor(
         widgetWidth = width.toFloat()
         widgetHeight = height.toFloat()
 
-        if (systemNightMode) {
-            linePainter.color = night_mode_lineColor
-            ringPointEdgePainter.color = night_mode_lineColor
-            dottedLinePainter.color = night_mode_lineColor
-            textPainter.color = night_mode_textColor
-            longTextPainter.color = night_mode_textColor
-            timeTextPainter.color = night_mode_textColor
-            temperaturePainter.color = night_mode_textColor
-            ringPointFullPainter.color = night_mode_ringCenterColor
-        } else {
-            linePainter.color = day_mode_lineColor
-            ringPointEdgePainter.color = day_mode_lineColor
-            dottedLinePainter.color = day_mode_lineColor
-            textPainter.color = day_mode_textColor
-            longTextPainter.color = day_mode_textColor
-            timeTextPainter.color = day_mode_textColor
-            temperaturePainter.color = day_mode_textColor
-            ringPointFullPainter.color = day_mode_ringCenterColor
-        }
+        linePainter.color = lineColor
+        ringPointEdgePainter.color = lineColor
+        dottedLinePainter.color = lineColor
+        textPainter.color = textColor
+        longTextPainter.color = textColor
+        timeTextPainter.color = textColor
+        temperaturePainter.color = textColor
+        ringPointFullPainter.color = ringCenterColor
 
         lineBackgroundPainter.shader = LinearGradient(
             0f,
             topPadding,
             0f,
             widgetHeight - bottomPadding,
-            day_mode_lineBackgroundColor.takeIf { systemNightMode }
-                ?: night_mode_lineBackgroundColor,
+            lineBackgroundColor,
             Color.argb(0, 255, 255, 255),
             Shader.TileMode.MIRROR)
 

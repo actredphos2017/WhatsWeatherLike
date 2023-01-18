@@ -34,4 +34,7 @@
     <color name="aqi_severe_night">#BA330A</color>
     <color name="iaqi_main_bg_night">#404533</color>
     <color name="iaqi_main_bg_day">#E2FF96</color>
+    <color name="wind_line">#4DDADF</color>
+    <color name="wind_line_bg">#8BFBFF</color>
+    <color name="app_background">#8CEAFE</color>
 </resources>

@@ -21,7 +21,10 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
-        <service android:name="com.baidu.location.f" android:enabled="true" android:process=":remote"> </service>
+        <service
+            android:name="com.baidu.location.f"
+            android:enabled="true"
+            android:process=":remote" />
 
         <activity
             android:name=".MainActivity"
@@ -40,6 +43,10 @@
                 android:name="com.baidu.lbsapi.API_KEY"
                 android:value="7G00KgUlyZW6DnNI2lM0Xr4NNcP0sqWk" />
         </activity>
+
+        <activity
+            android:name=".CardManageActivity"
+            android:exported="true" />
     </application>
 
 </manifest>

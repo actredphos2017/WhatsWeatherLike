@@ -10,36 +10,42 @@
         android:id="@+id/menu_btn"
         android:layout_width="48dp"
         android:layout_height="48dp"
+        android:background="@color/translation"
+        android:contentDescription="@string/add_city"
         android:paddingHorizontal="6dp"
         android:paddingVertical="6dp"
-        android:src="@drawable/icon_menu"
-        android:background="@color/translation"
         android:scaleType="centerCrop"
+        android:src="@drawable/icon_menu"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:contentDescription="@string/add_city" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
         android:id="@+id/add_city_btn"
         android:layout_width="48dp"
         android:layout_height="48dp"
+        android:background="@color/translation"
+        android:contentDescription="@string/add_city"
         android:paddingHorizontal="6dp"
         android:paddingVertical="6dp"
-        android:src="@drawable/icon_add_city"
-        android:background="@color/translation"
         android:scaleType="centerCrop"
+        android:src="@drawable/icon_add_city"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:contentDescription="@string/add_city" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/vp_cardsView"
+    <com.sakuno.whatsweatherlike.customwidgets.BetterSwipeRefreshLayout
+        android:id="@+id/rfl_fresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginVertical="60dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-    </androidx.viewpager2.widget.ViewPager2>
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/vp_cardsView"
+            android:layout_marginVertical="60dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.sakuno.whatsweatherlike.customwidgets.BetterSwipeRefreshLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

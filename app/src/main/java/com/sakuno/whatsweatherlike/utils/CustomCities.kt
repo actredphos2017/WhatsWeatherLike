@@ -6,6 +6,7 @@ data class CustomCities(
     @SerializedName("cities")
     var cities: List<City>
 ) {
+
     fun check(): Boolean {
         val oldSize = cities.size
         cities = cities.toMutableList().run {

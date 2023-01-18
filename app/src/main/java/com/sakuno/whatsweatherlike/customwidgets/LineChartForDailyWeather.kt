@@ -45,19 +45,11 @@ class LineChartForDailyWeather @JvmOverloads constructor(
     var widgetWidth = 0f
     var widgetHeight = 0f
 
-    var systemNightMode = false
-
-    var day_mode_lineColor = Color.BLUE
-    var day_mode_lineBackgroundColor = Color.BLUE
-    var day_mode_textColor = Color.BLACK
-    var day_mode_ringCenterColor = Color.WHITE
-    var day_mode_splitLineColor = Color.GRAY
-
-    var night_mode_lineColor = Color.BLUE
-    var night_mode_lineBackgroundColor = Color.BLUE
-    var night_mode_textColor = Color.WHITE
-    var night_mode_ringCenterColor = Color.WHITE
-    var night_mode_splitLineColor = Color.GRAY
+    var lineColor = Color.BLUE
+    var lineBackgroundColor = Color.BLUE
+    var textColor = Color.BLACK
+    var ringCenterColor = Color.WHITE
+    var splitLineColor = Color.GRAY
 
     var maxTemperature: Float = 0f
     var minTemperature: Float = 0f
@@ -176,39 +168,30 @@ class LineChartForDailyWeather @JvmOverloads constructor(
         widgetWidth = width.toFloat()
         widgetHeight = height.toFloat()
 
-        if (systemNightMode) {
-            linePainter.color = night_mode_lineColor
-            ringPointEdgePainter.color = night_mode_lineColor
-            dottedLinePainter.color = night_mode_lineColor
-            textPainter.color = night_mode_textColor
-            longTextPainter.color = night_mode_textColor
-            timeTextPainter.color = night_mode_textColor
-            ringPointFullPainter.color = night_mode_ringCenterColor
-        } else {
-            linePainter.color = day_mode_lineColor
-            ringPointEdgePainter.color = day_mode_lineColor
-            dottedLinePainter.color = day_mode_lineColor
-            textPainter.color = day_mode_textColor
-            longTextPainter.color = day_mode_textColor
-            timeTextPainter.color = day_mode_textColor
-            ringPointFullPainter.color = day_mode_ringCenterColor
-        }
+        linePainter.color = lineColor
+        ringPointEdgePainter.color = lineColor
+        dottedLinePainter.color = lineColor
+        textPainter.color = textColor
+        longTextPainter.color = textColor
+        timeTextPainter.color = textColor
+        ringPointFullPainter.color = ringCenterColor
 
-        lineBackgroundPainter.shader = LinearGradient(0f,
+        lineBackgroundPainter.shader = LinearGradient(
+            0f,
             topPadding,
             0f,
             widgetHeight - bottomPadding,
-            day_mode_lineBackgroundColor.takeIf { systemNightMode }
-                ?: night_mode_lineBackgroundColor,
+            lineBackgroundColor,
             Color.argb(0, 255, 255, 255),
-            Shader.TileMode.MIRROR)
+            Shader.TileMode.MIRROR
+        )
 
         splitLinePainter.shader = LinearGradient(0f,
             infoStartPadding,
             0f,
             ((widgetHeight - infoEndPadding) + infoStartPadding) / 2,
             Color.argb(0, 255, 255, 255),
-            day_mode_splitLineColor.takeIf { systemNightMode } ?: night_mode_splitLineColor,
+            splitLineColor,
             Shader.TileMode.MIRROR)
 
         firstLinePath.reset()
@@ -290,8 +273,10 @@ class LineChartForDailyWeather @JvmOverloads constructor(
             )
 
             canvas.drawText(
-                weatherInfoResourceArray[i].skyCondition_08_20, it.first,
-                infoStartPadding + dp2px(60f), textPainter
+                weatherInfoResourceArray[i].skyCondition_08_20,
+                it.first,
+                infoStartPadding + dp2px(60f),
+                textPainter
             )
 
 
@@ -305,8 +290,10 @@ class LineChartForDailyWeather @JvmOverloads constructor(
             )
 
             canvas.drawText(
-                weatherInfoResourceArray[i].skyCondition_20_32, it.first,
-                widgetHeight - infoEndPadding - dp2px(52f), textPainter
+                weatherInfoResourceArray[i].skyCondition_20_32,
+                it.first,
+                widgetHeight - infoEndPadding - dp2px(52f),
+                textPainter
             )
 
 

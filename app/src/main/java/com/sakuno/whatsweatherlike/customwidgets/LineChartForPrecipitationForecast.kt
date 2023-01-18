@@ -14,10 +14,10 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
 
-    var hPadding = dp2px(10f)
-    var topPadding = dp2px(10f)
-    var bottomPadding = dp2px(30f)
-    var paintStrokeWidth = dp2px(1f)
+    private var hPadding = dp2px(10f)
+    private var topPadding = dp2px(10f)
+    private var bottomPadding = dp2px(30f)
+    private var paintStrokeWidth = dp2px(1f)
 
     private val linePainter = Paint()
     private var linePath = Path()
@@ -27,42 +27,26 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
 
     private val textPainter = Paint()
 
-    var widgetWidth = 0f
-    var widgetHeight = 0f
+    private var widgetWidth = 0f
+    private var widgetHeight = 0f
 
     private var maxPoint = 0f
     var maxData = 0f
 
-    var systemNightMode = false
+    var lineColor = Color.BLUE
+    var lineBackgroundColor = Color.BLUE
+    var textColor = Color.WHITE
 
-    var day_mode_lineColor = Color.BLUE
-    var day_mode_lineBackgroundColor = Color.BLUE
-    var day_mode_textColor = Color.WHITE
-
-    var night_mode_lineColor = Color.BLUE
-    var night_mode_lineBackgroundColor = Color.BLUE
-    var night_mode_textColor = Color.WHITE
-
-    var points = arrayOf<DataPoint>()
+    private var points = arrayOf<DataPoint>()
 
     var startIndex = mutableListOf<Int>()
     var endIndex = mutableListOf<Int>()
 
-    var showBottomScale = false
-    var bottomScaleType = ScaleType.NUMBER
-    var bottomScaleDisplayType = ScaleDisplayType.STEP_POINT
-
     var startTime = MyTime(0, 0)
     var stepTime = MyTime(0, 1)
 
-    var startNum = 0
-    var stepNum = 1
-    var stepPoint = 1
-
     var notZeroAtBeginning = false
 
-    enum class ScaleType { NUMBER, TIME }
-    enum class ScaleDisplayType { STEP_POINT, START_AND_END }
 
     fun applyChanges() = run { invalidate() }
 
@@ -142,15 +126,15 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
         linePath.reset()
         lineBackgroundPath.reset()
 
-        linePainter.color = night_mode_lineColor.takeIf { systemNightMode } ?: day_mode_lineColor
-        textPainter.color = night_mode_textColor.takeIf { systemNightMode } ?: day_mode_textColor
+        linePainter.color = lineColor
+        textPainter.color = textColor
 
         lineBackgroundPainter.shader = LinearGradient(
             0f,
             topPadding,
             0f,
             widgetHeight - bottomPadding,
-            night_mode_lineBackgroundColor.takeIf { systemNightMode } ?: day_mode_lineBackgroundColor,
+            lineBackgroundColor,
             Color.argb(0, 255, 255, 255),
             Shader.TileMode.MIRROR
         )
@@ -182,117 +166,31 @@ class LineChartForPrecipitationForecast @JvmOverloads constructor(
         canvas.drawPath(lineBackgroundPath, lineBackgroundPainter)
         canvas.drawPath(linePath, linePainter)
 
-        if (showBottomScale) {
-            when (bottomScaleDisplayType) {
-                ScaleDisplayType.STEP_POINT -> when (bottomScaleType) {
 
-                    ScaleType.NUMBER -> {
-                        var num = startNum
-                        canvas.drawText(
-                            num.toString(),
-                            hPadding,
-                            widgetHeight - bottomPadding + dp2px(16f),
-                            textPainter
-                        )
-                        num += stepPoint * stepNum
+        canvas.drawText(
+            startTime.toString(),
+            hPadding,
+            widgetHeight - bottomPadding + dp2px(16f),
+            textPainter
+        )
 
-                        var i = stepPoint
-                        while (i < points.size) {
-                            canvas.drawText(
-                                num.toString(),
-                                points[i].x,
-                                widgetHeight - bottomPadding + dp2px(16f),
-                                textPainter
-                            )
-                            i += stepPoint
-                            num += stepPoint * stepNum
-                        }
-                    }
-
-                    ScaleType.TIME -> {
-                        val time = startTime
-
-                        canvas.drawText(
-                            time.toString(),
-                            hPadding,
-                            widgetHeight - bottomPadding + dp2px(16f),
-                            textPainter
-                        )
-                        time += stepTime * stepPoint
-
-                        var i = stepPoint
-                        while (i < points.size) {
-                            canvas.drawText(
-                                time.toString(),
-                                points[i].x,
-                                widgetHeight - bottomPadding + dp2px(16f),
-                                textPainter
-                            )
-                            i += stepPoint
-                            time += stepTime * stepPoint
-                        }
-                    }
-                }
-
-                ScaleDisplayType.START_AND_END -> when (bottomScaleType) {
-
-                    ScaleType.NUMBER -> {
-                        canvas.drawText(
-                            startNum.toString(),
-                            hPadding,
-                            widgetHeight - bottomPadding + dp2px(16f),
-                            textPainter
-                        )
-
-                        for (it in startIndex) {
-                            if (it == 0) continue
-                            canvas.drawText(
-                                (startNum + it * stepNum).toString(),
-                                points[it].x,
-                                widgetHeight - bottomPadding + dp2px(16f),
-                                textPainter
-                            )
-                        }
-                        for (it in endIndex) {
-                            if (it == 0) continue
-                            canvas.drawText(
-                                (startNum + it * stepNum).toString(),
-                                points[it].x,
-                                widgetHeight - bottomPadding + dp2px(16f),
-                                textPainter
-                            )
-                        }
-                    }
-
-                    ScaleType.TIME -> {
-                        canvas.drawText(
-                            startTime.toString(),
-                            hPadding,
-                            widgetHeight - bottomPadding + dp2px(16f),
-                            textPainter
-                        )
-
-                        for (it in startIndex) {
-                            if (it == 0) continue
-                            canvas.drawText(
-                                (startTime + stepTime * it).toString(),
-                                points[it].x,
-                                widgetHeight - bottomPadding + dp2px(16f),
-                                textPainter
-                            )
-                        }
-                        for (it in endIndex) {
-                            if (it == 0) continue
-                            canvas.drawText(
-                                (startTime + stepTime * it).toString(),
-                                points[it].x,
-                                widgetHeight - bottomPadding + dp2px(16f),
-                                textPainter
-                            )
-                        }
-                    }
-                }
-            }
+        for (it in startIndex) {
+            if (it == 0) continue
+            canvas.drawText(
+                (startTime + stepTime * it).toString(),
+                points[it].x,
+                widgetHeight - bottomPadding + dp2px(16f),
+                textPainter
+            )
+        }
+        for (it in endIndex) {
+            if (it == 0) continue
+            canvas.drawText(
+                (startTime + stepTime * it).toString(),
+                points[it].x,
+                widgetHeight - bottomPadding + dp2px(16f),
+                textPainter
+            )
         }
     }
 

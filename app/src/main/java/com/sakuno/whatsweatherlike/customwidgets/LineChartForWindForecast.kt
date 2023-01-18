@@ -30,13 +30,8 @@ class LineChartForWindForecast @JvmOverloads constructor(
     private var maxPoint = 0f
     var maxData = 0f
 
-    var systemNightMode = false
-
-    var day_mode_lineColor = Color.BLUE
-    var day_mode_lineBackgroundColor = Color.BLUE
-
-    var night_mode_lineColor = Color.BLUE
-    var night_mode_lineBackgroundColor = Color.BLUE
+    var lineColor = Color.BLUE
+    var lineBackgroundColor = Color.BLUE
 
     var points = arrayOf<DataPoint>()
 
@@ -121,14 +116,14 @@ class LineChartForWindForecast @JvmOverloads constructor(
         linePath.reset()
         lineBackgroundPath.reset()
 
-        linePainter.color = night_mode_lineColor.takeIf { systemNightMode } ?: day_mode_lineColor
+        linePainter.color = lineColor
 
         lineBackgroundPainter.shader = LinearGradient(
             0f,
             topPadding,
             0f,
             widgetHeight - bottomPadding,
-            night_mode_lineBackgroundColor.takeIf { systemNightMode } ?: day_mode_lineBackgroundColor,
+            lineBackgroundColor,
             Color.argb(0, 255, 255, 255),
             Shader.TileMode.MIRROR
         )

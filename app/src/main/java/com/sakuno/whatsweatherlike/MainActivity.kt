@@ -6,11 +6,13 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.app.UiModeManager
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.pm.PermissionInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
@@ -69,6 +71,8 @@ class MainActivity : Activity() {
 
     private var mutableCardView: MutableMap<Int, View> = mutableMapOf()
 
+    private var refreshLayout: BetterSwipeRefreshLayout? = null
+
     private var customCitiesFromPreferences: CustomCities
         get() = Gson().fromJson(
             citiesPreferences!!.getString("cities", "") ?: "", CustomCities::class.java
@@ -117,7 +121,7 @@ class MainActivity : Activity() {
 
         checkAndGetPermissions()
 
-        window.statusBarColor = getColor(R.color.translation)
+        window.statusBarColor = getColor(R.color.black_translation)
 
         nightMode =
             (this@MainActivity.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).nightMode == UiModeManager.MODE_NIGHT_YES
@@ -151,11 +155,39 @@ class MainActivity : Activity() {
             showAddCityDialog()
         }
 
+        findViewById<ImageButton>(R.id.menu_btn).setOnClickListener {
+            startActivityForResult(
+                Intent(this@MainActivity, CardManageActivity::class.java), 3
+            )
+        }
+
         mainCardView = findViewById(R.id.vp_cardsView)
 
         fleshDefaultIndex = favoriteCityIndex
 
-        if (getEnoughPermissions()) fleshData()
+        refreshLayout = findViewById(R.id.rfl_fresh_layout)
+
+        refreshLayout!!.run {
+            setOnRefreshListener {
+                fleshDefaultIndex = mainCardView!!.currentItem
+                fleshData()
+            }
+            isRefreshing = true
+            fleshData()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            3 -> {
+                if(resultCode != 1){
+                    customCityList = customCitiesFromPreferences
+                    fleshDefaultIndex = favoriteCityIndex
+                    fleshData()
+                }
+            }
+        }
     }
 
     private fun initCityList() {
@@ -236,6 +268,7 @@ class MainActivity : Activity() {
     }
 
     private fun fleshData() {
+        if (!getEnoughPermissions()) return
 
         Log.d("BaiduLocation", "Start Locate")
         locationClient?.start()
@@ -243,6 +276,8 @@ class MainActivity : Activity() {
         mainCardView!!.adapter = this.UserCitiesAdapter(
             (customCityList ?: CustomCities(listOf())).cities
         )
+
+        refreshLayout?.isRefreshing = false
 
         mainCardView!!.startAnimation(AnimationUtils.loadAnimation(this, R.anim.alpha_show))
 
@@ -619,11 +654,11 @@ class MainActivity : Activity() {
             view.findViewById<LineChartForDailyWeather>(R.id.detail_lc_daily_weather_forecast)
                 .apply {
                     weatherInfoResourceArray = dailyWeatherInfoList.toTypedArray()
-                    day_mode_lineColor = getColor(R.color.deep_green)
-                    day_mode_lineBackgroundColor = getColor(R.color.light_green)
-                    night_mode_lineColor = getColor(R.color.light_green)
-                    night_mode_lineBackgroundColor = getColor(R.color.deep_green)
-                    systemNightMode = nightMode
+                    lineColor =
+                        if (nightMode) getColor(R.color.light_green) else getColor(R.color.deep_green)
+                    lineBackgroundColor =
+                        if (nightMode) getColor(R.color.deep_green) else getColor(R.color.light_green)
+                    textColor = if (nightMode) Color.WHITE else Color.BLACK
                     applyChanges()
                 }
 
@@ -649,11 +684,11 @@ class MainActivity : Activity() {
 
             view.findViewById<LineChartForHourWeather>(R.id.detail_lc_hour_forecast).apply {
                 weatherInfoResourceArray = hourlyWeatherInfoList.toTypedArray()
-                day_mode_lineColor = getColor(R.color.deep_green)
-                day_mode_lineBackgroundColor = getColor(R.color.light_green)
-                night_mode_lineColor = getColor(R.color.light_green)
-                night_mode_lineBackgroundColor = getColor(R.color.deep_green)
-                systemNightMode = nightMode
+                lineColor =
+                    if (nightMode) getColor(R.color.light_green) else getColor(R.color.deep_green)
+                lineBackgroundColor =
+                    if (nightMode) getColor(R.color.deep_green) else getColor(R.color.light_green)
+                textColor = if (nightMode) Color.WHITE else Color.BLACK
                 applyChanges()
             }
 
@@ -670,24 +705,19 @@ class MainActivity : Activity() {
             view.findViewById<LineChartForPrecipitationForecast>(R.id.detail_lc_realtime_precipitation)
                 .apply {
                     setDataArray(dataArray)
-                    day_mode_lineColor = getColor(R.color.deep_blue)
-                    day_mode_lineBackgroundColor = getColor(R.color.light_blue)
-                    night_mode_lineColor = getColor(R.color.light_blue)
-                    night_mode_lineBackgroundColor = getColor(R.color.deep_blue)
-                    systemNightMode = nightMode
-
-                    showBottomScale = true
-                    bottomScaleType = LineChartForPrecipitationForecast.ScaleType.TIME
-                    bottomScaleDisplayType =
-                        LineChartForPrecipitationForecast.ScaleDisplayType.START_AND_END
+                    lineColor =
+                        if (nightMode) getColor(R.color.light_blue) else getColor(R.color.deep_blue)
+                    lineBackgroundColor =
+                        if (nightMode) getColor(R.color.deep_blue) else getColor(R.color.light_blue)
                     startTime = currentTime
-                    stepTime = MyTime.fromMinute(1)
+                    textColor = if (nightMode) Color.WHITE else Color.BLACK
                     maxPrecipitation = maxData
                     startIndexes = startIndex.toIntArray()
                     endIndexes = endIndex.toIntArray()
                     isRaining = notZeroAtBeginning
                     applyChanges()
                 }
+
             view.findViewById<TextView>(R.id.detail_tv_max_precipitation).text =
                 if (maxPrecipitation != 0f) maxPrecipitation.toString() else ""
 
@@ -761,7 +791,6 @@ class MainActivity : Activity() {
                 } $speed m/s"
             }
 
-
             val windStrengthDataList = mutableListOf<Double>()
             for (each in weather.hourly.wind) {
                 windStrengthDataList += each.speed
@@ -770,8 +799,25 @@ class MainActivity : Activity() {
 
             view.findViewById<LineChartForWindForecast>(R.id.detail_lc_wind_forecast).run {
                 setDataArray(windStrengthDataList.toDoubleArray())
+                lineColor = getColor(R.color.wind_line)
+                lineBackgroundColor = getColor(R.color.wind_line_bg)
                 applyChanges()
             }
+
+
+            // init detail info card
+
+            view.findViewById<TextView>(R.id.detail_tv_ultraviolet).text =
+                weather.realtime.lifeIndex.ultraviolet.run {
+                    if (index == 0) "当前无紫外线"
+                    else "紫外线强度$desc"
+                }
+
+            view.findViewById<TextView>(R.id.detail_tv_pressure).text =
+                "气压为${(weather.realtime.pressure / 10).roundToInt().toDouble() / 100}kPa"
+
+            view.findViewById<TextView>(R.id.detail_tv_humidity).text =
+                "相对湿度为 ${(weather.realtime.humidity * 100).roundToInt()}%"
         }
     }
 
@@ -1070,19 +1116,16 @@ class MainActivity : Activity() {
 
         override fun onCreateViewHolder(
             parent: ViewGroup, viewType: Int
-        ): UserCitiesViewHolder {
-            return UserCitiesViewHolder(
-                LayoutInflater.from(parent.context).inflate(R.layout.weather_card, parent, false)
-            )
-        }
+        ): UserCitiesViewHolder = UserCitiesViewHolder(
+            LayoutInflater.from(parent.context).inflate(R.layout.weather_card, parent, false)
+        )
 
-        override fun onBindViewHolder(holder: UserCitiesViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: UserCitiesViewHolder, position: Int) =
             holder.build(list[position], position)
-        }
 
-        override fun getItemCount(): Int {
-            return list.size
-        }
+
+        override fun getItemCount(): Int = list.size
+
     }
 
     private fun drawableToBitmap(drawable: Drawable): Bitmap = drawable.run {
