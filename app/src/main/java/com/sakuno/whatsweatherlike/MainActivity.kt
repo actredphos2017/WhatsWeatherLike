@@ -1007,7 +1007,7 @@ class MainActivity : Activity() {
 
                     val preResBackground =
                         CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
-                            CityWeatherModel.TIME_NORMAL
+                            CityWeatherModel.toTimeRange(MyTime.fromString(model.updateTime))
                         )
 
                     val preNowAqiGrade =

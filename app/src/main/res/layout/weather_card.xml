@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:src="@mipmap/sunny"
+            android:src="@mipmap/background_sunny_normal"
             app:layout_constraintTop_toTopOf="@+id/constraintLayout"
             tools:ignore="ContentDescription"
             tools:layout_editor_absoluteX="26dp" />

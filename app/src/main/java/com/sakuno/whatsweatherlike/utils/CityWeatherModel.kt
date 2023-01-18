@@ -46,66 +46,81 @@ class CityWeatherModel {
 
         const val TIME_MORNING = 1
 
-        const val TIME_EVENING = 2
+        const val TIME_SUNSET = 2
 
         const val TIME_NIGHT = 3
 
+        fun toTimeRange(time: MyTime): Int =
+            when (time.toMinSum()) {
+                in MyTime(5, 30).toMinSum()..MyTime(7, 0).toMinSum() -> TIME_MORNING
+                in MyTime(7, 0).toMinSum()..MyTime(16, 30).toMinSum() -> TIME_NORMAL
+                in MyTime(16, 30).toMinSum()..MyTime(19, 0).toMinSum() -> TIME_SUNSET
+                else -> TIME_NIGHT
+            }
+
+
         private val sunnyMipmap: (Int) -> Int = {
             when (it) {
-                TIME_MORNING -> R.mipmap.sunny_morning
-                TIME_EVENING -> R.mipmap.sunny_evening
-                TIME_NIGHT -> R.mipmap.sunny_night
-                else -> R.mipmap.sunny
+                TIME_MORNING -> R.mipmap.background_sunny_morning
+                TIME_SUNSET -> R.mipmap.background_sunny_sunset
+                TIME_NIGHT -> R.mipmap.background_sunny_night
+                else -> R.mipmap.background_sunny_normal
             }
         }
 
         private val cloudyMipmap: (Int) -> Int = {
             when (it) {
-                TIME_MORNING -> R.mipmap.cloudy_morning
-                TIME_NIGHT -> R.mipmap.cloudy_night
-                else -> R.mipmap.cloudy
+                TIME_MORNING -> R.mipmap.background_cloudy_morning
+                TIME_SUNSET -> R.mipmap.background_cloudy_sunset
+                TIME_NIGHT -> R.mipmap.background_cloudy_night
+                else -> R.mipmap.background_cloudy_normal
             }
         }
 
         private val overcastMipmap: (Int) -> Int = {
             when (it) {
-                TIME_NIGHT -> R.mipmap.overcast_night
-                else -> R.mipmap.overcast
+                TIME_MORNING -> R.mipmap.background_overcast_morning
+                TIME_NIGHT -> R.mipmap.background_overcast_night
+                TIME_SUNSET -> R.mipmap.background_overcast_sunset
+                else -> R.mipmap.background_overcast_normal
             }
         }
 
         private val rainyMipmap: (Int) -> Int = {
             when (it) {
-                TIME_NIGHT -> R.mipmap.rainy_night
-                else -> R.mipmap.rainy
+                TIME_MORNING -> R.mipmap.background_rainy_morning
+                TIME_SUNSET -> R.mipmap.background_rainy_sunset
+                TIME_NIGHT -> R.mipmap.background_rainy_night
+                else -> R.mipmap.background_rainy_normal
             }
         }
 
         private val thunderMipmap: (Int) -> Int = {
             when (it) {
-                TIME_NIGHT -> R.mipmap.thunder_night
-                else -> R.mipmap.thunder
+                TIME_MORNING -> R.mipmap.background_thunder_morning
+                TIME_NIGHT -> R.mipmap.background_thunder_night
+                TIME_SUNSET -> R.mipmap.background_thunder_sunset
+                else -> R.mipmap.background_thunder_normal
             }
         }
 
-        private val snowMipmap: (Int) -> Int = {
+        private val snowyMipmap: (Int) -> Int = {
             when (it) {
-                TIME_NIGHT -> R.mipmap.snow_night
-                else -> R.mipmap.snow
+                TIME_MORNING -> R.mipmap.background_snowy_morning
+                TIME_NIGHT -> R.mipmap.background_snowy_night
+                TIME_SUNSET -> R.mipmap.background_snowy_sunset
+                else -> R.mipmap.background_snowy_normal
             }
         }
 
-        private val foggyMipmap: (Int) -> Int = {
+        private val hazeMipmap: (Int) -> Int = {
             when (it) {
-                else -> R.mipmap.fog
+                TIME_NIGHT -> R.mipmap.background_haze_night
+                else -> R.mipmap.background_haze_normal
             }
         }
 
-        private val blackMipmap: (Int) -> Int = {
-            when (it) {
-                else -> sunnyMipmap(it)
-            }
-        }
+        private val blackMipmap: (Int) -> Int = sunnyMipmap
 
         fun windStrengthIndicator(speed: Double): Int = windStrengthIndicator(speed.toInt())
 
@@ -152,10 +167,10 @@ class CityWeatherModel {
                 "CLEAR_DAY", "CLEAR_NIGHT" -> sunnyMipmap
                 "PARTLY_CLOUDY_DAY", "PARTLY_CLOUDY_NIGHT", "CLOUDY", "WIND" -> cloudyMipmap
                 "FOG" -> overcastMipmap
-                "LIGHT_HAZE", "MODERATE_HAZE", "HEAVY_HAZE", "DUST", "SAND" -> foggyMipmap
+                "LIGHT_HAZE", "MODERATE_HAZE", "HEAVY_HAZE", "DUST", "SAND" -> hazeMipmap
                 "LIGHT_RAIN", "MODERATE_RAIN" -> rainyMipmap
                 "STORM_RAIN", "HEAVY_RAIN" -> thunderMipmap
-                "LIGHT_SNOW", "MODERATE_SNOW", "HEAVY_SNOW", "STORM_SNOW" -> snowMipmap
+                "LIGHT_SNOW", "MODERATE_SNOW", "HEAVY_SNOW", "STORM_SNOW" -> snowyMipmap
                 else -> blackMipmap
             }
         }
@@ -189,20 +204,11 @@ class CityWeatherModel {
             in 201..300 -> R.mipmap.aqi_heavy_icon
             else -> R.mipmap.aqi_severe_icon
         }
-
-        fun toAqiGradeStringResourceName(aqi: Int): String = when (aqi) {
-            in 0..50 -> "excellent"
-            in 51..100 -> "great"
-            in 101..150 -> "mild"
-            in 151..200 -> "moderate"
-            in 201..300 -> "heavy"
-            else -> "severe"
-        }
     }
 
     private val localCity: City
         get() {
-            while(!locateFinish) {
+            while (!locateFinish) {
                 Log.d("BaiduLocation", "Trying Locate...")
                 Thread.sleep(intervalOfCheckInformationAcquisition)
             }
@@ -221,8 +227,7 @@ class CityWeatherModel {
             calendar.timeInMillis = weatherInfo!!.serverTime * 1000
 
             todayWeekDay = calendar.get(Calendar.DAY_OF_WEEK) - 1
-            updateTime =
-                SimpleDateFormat("HH:mm", Locale("cn")).format(calendar.time)
+            updateTime = SimpleDateFormat("HH:mm", Locale("cn")).format(calendar.time)
 
             Log.d("Data", "InM Time: ${weatherInfo!!.serverTime}")
             Log.d(
@@ -259,9 +264,7 @@ class CityWeatherModel {
         return updateWithDataString(
             OkHttpTools.getJsonObjectResponse(
                 weatherURL(
-                    key,
-                    prepareCity.longitude,
-                    prepareCity.latitude
+                    key, prepareCity.longitude, prepareCity.latitude
                 )
             ), prepareCity.showName
         )
