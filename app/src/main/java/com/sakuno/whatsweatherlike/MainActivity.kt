@@ -73,6 +73,8 @@ class MainActivity : Activity() {
 
     private var mainCardView: ViewPager2? = null
 
+    private var progressDots: ProgressDots? = null
+
     private var fleshDefaultIndex: Int = 0
 
     private var mutableCardView: MutableMap<Int, UserCitiesAdapter.UserCitiesViewHolder> =
@@ -130,7 +132,8 @@ class MainActivity : Activity() {
 
         checkAndGetPermissions()
 
-        window.statusBarColor = getColor(R.color.black_translation)
+        window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+        window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
 
         nightMode =
             (this@MainActivity.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).nightMode == UiModeManager.MODE_NIGHT_YES
@@ -172,6 +175,8 @@ class MainActivity : Activity() {
 
         mainCardView = findViewById(R.id.vp_cardsView)
 
+        progressDots = findViewById(R.id.progress_dots)
+
         fleshDefaultIndex = favoriteCityIndex
 
         refreshLayout = findViewById(R.id.rfl_fresh_layout)
@@ -190,7 +195,13 @@ class MainActivity : Activity() {
                 super.onPageScrollStateChanged(state)
                 when (state) {
                     ViewPager2.SCROLL_STATE_DRAGGING -> skipUpdateBackground = true
-                    ViewPager2.SCROLL_STATE_IDLE -> waitingForUpdateBackground()
+                    ViewPager2.SCROLL_STATE_IDLE -> {
+                        progressDots!!.apply {
+                            currentDot = mainCardView!!.currentItem
+                            applyChanges()
+                        }
+                        waitingForUpdateBackground()
+                    }
                     ViewPager2.SCROLL_STATE_SETTLING -> {}
                 }
             }
@@ -315,12 +326,23 @@ class MainActivity : Activity() {
             (customCityList ?: CustomCities(listOf())).cities
         )
 
+
+
         refreshLayout?.isRefreshing = false
 
         mainCardView!!.startAnimation(AnimationUtils.loadAnimation(this, R.anim.alpha_show))
 
         mainCardView!!.currentItem = fleshDefaultIndex
         fleshDefaultIndex = favoriteCityIndex
+
+        progressDots!!.apply {
+            currentDotColor = getColor(R.color.white)
+            dotColor = getColor(R.color.white_translation2)
+            textColor = getColor(R.color.white_translation)
+            dotNum = customCityList!!.cities.size
+            currentDot = mainCardView!!.currentItem
+            applyChanges()
+        }
 
         waitingForUpdateBackground()
     }
@@ -871,57 +893,7 @@ class MainActivity : Activity() {
 
             private var detailDialog: Dialog? = null
 
-            private val isLocalIV: ImageView = view.findViewById(R.id.card_iv_is_local)
-
-            private val isFavoriteIV: ImageView = view.findViewById(R.id.card_iv_favorite)
-
-            private val cityNameTV: TextView = view.findViewById(R.id.tv_cityTitle)
-
-            private val updateTimeTV: TextView = view.findViewById(R.id.tv_updateTime)
-
-            private val nowTemperTV: TextView = view.findViewById(R.id.tv_nowTemper)
-
-            private val nowAqiTV: TextView = view.findViewById(R.id.tv_aqi)
-
-            private val nowAqiGradeIV: ImageView = view.findViewById(R.id.iv_aqiGrade)
-
-            private val nowWeatherTV: TextView = view.findViewById(R.id.tv_nowWeather)
-
-            private val nowWindDirectionTV: TextView = view.findViewById(R.id.tv_windDirection)
-
-            private val nowWindStrengthTV: TextView = view.findViewById(R.id.tv_windStrength)
-
-            private val nowWeatherBackground: ImageView =
-                view.findViewById(R.id.iv_cardWeatherBackground)
-
             var backgroundUrl: Int? = null
-
-            private val todayWeatherTV: TextView = view.findViewById(R.id.tv_todayWeather)
-
-            private val todayTemperTV: TextView = view.findViewById(R.id.tv_todayTemper)
-
-            private val todayWeatherIV: ImageView = view.findViewById(R.id.iv_todayWeather)
-
-            private val tomorrowWeatherTV: TextView = view.findViewById(R.id.tv_tomorrowWeather)
-
-            private val tomorrowTemperTV: TextView = view.findViewById(R.id.tv_tomorrowTemper)
-
-            private val tomorrowWeatherIV: ImageView = view.findViewById(R.id.iv_tomorrowWeather)
-
-            private val backgroundLL: LinearLayout =
-                view.findViewById(R.id.card_ll_daily_weather_background)
-
-            private val weekDayOfDayAfterTomorrowTV: TextView =
-                view.findViewById(R.id.tv_weekDayOfDayAfterTomorrow)
-
-            private val dayAfterTomorrowWeatherTV: TextView =
-                view.findViewById(R.id.tv_dayAfterTomorrowWeather)
-
-            private val dayAfterTomorrowTemperTV: TextView =
-                view.findViewById(R.id.tv_dayAfterTomorrowTemper)
-
-            private val dayAfterTomorrowWeatherIV: ImageView =
-                view.findViewById(R.id.iv_dayAfterTomorrowWeather)
 
             private val detailBtn: View = view.findViewById(R.id.btn_to_detail)
 
@@ -949,11 +921,10 @@ class MainActivity : Activity() {
             }
 
             @SuppressLint("SetTextI18n")
-            fun build(position: City, index: Int) {
-
-                mutableCardView[index] = this
+            fun update(position: City, index: Int, getDataFromApi: Boolean) {
 
                 Thread {
+                    mutableCardView[index] = this
 
                     val model = CityWeatherModel()
 
@@ -976,153 +947,163 @@ class MainActivity : Activity() {
                         }
                     }
 
-                    if (model.updateWithCity(
-                            caiyunWeatherKey, position
-                        ).available
-                    ) {
-                        editor.putString(position.hashCode().toString(), model.dataBody)
-                        editor.apply()
+                    if (getDataFromApi) {
+                        if (model.updateWithCity(caiyunWeatherKey, position).available) {
+                            Log.d("PreferencesData", "Write ${position.hashCode()}")
+                            editor.putString(position.hashCode().toString(), model.dataBody)
+                            editor.apply()
+                        } else {
+                            Log.d("PreferencesData", "Read ${position.hashCode()}")
+                            weatherInfoPreferences!!.getString(position.hashCode().toString(), "")
+                                .takeIf { it?.isNotBlank() == true }.run {
+                                    runOnUiThread {
+                                        Toast.makeText(
+                                            this@MainActivity, "刷新失败，请检查网络", Toast.LENGTH_LONG
+                                        ).show()
+                                    }
+                                    if (!model.updateWithDataString(
+                                            this@run ?: "", position.showName
+                                        ).available
+                                    ) {
+                                        return@Thread
+                                    }
+                                }
+                        }
                     } else {
-                        Log.d("Data", "数据获取失败，正在尝试获取先前成功的数据")
                         weatherInfoPreferences!!.getString(position.hashCode().toString(), "")
-                            .takeIf {
-                                it?.isNotBlank() ?: false
-                            }.run {
+                            .takeIf { it?.isNotBlank() == true }.run {
                                 if (!model.updateWithDataString(
-                                        this ?: "", position.showName
+                                        this@run ?: "", position.showName
                                     ).available
                                 ) {
-                                    runOnUiThread {
-                                        Toast.makeText(
-                                            this@MainActivity,
-                                            "数据获取失败，没有近期成功的数据可展示",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    }
                                     return@Thread
-                                } else {
-                                    runOnUiThread {
-                                        Toast.makeText(
-                                            this@MainActivity,
-                                            "数据获取失败，正在展示的是最后一次成功的数据",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    }
                                 }
                             }
                     }
 
                     updateTime = MyTime.fromString(model.updateTime)
 
-                    val isLocal = if (index == 0) View.VISIBLE else View.INVISIBLE
+                    insertData(model, index)
+                }.start()
 
-                    val isFavorite =
-                        if (index == favoriteCityIndex) View.VISIBLE else View.INVISIBLE
+            }
 
-                    val weather = model.weatherInfo!!.result
+            private fun insertData(model: CityWeatherModel, index: Int) {
 
-                    val preResWD = getStringResource(
-                        "WD${
-                            CityWeatherModel.windDirectionIndicator(
-                                weather.realtime.wind.direction
-                            )
-                        }"
-                    )
+                val isLocal = if (index == 0) View.VISIBLE else View.INVISIBLE
 
-                    val preResWS = weather.realtime.wind.speed.run {
-                        "${
-                            getStringResource(
-                                "WS${
-                                    CityWeatherModel.windStrengthIndicator(this)
-                                }"
-                            )
-                        } ${
-                            getStringResource(
-                                "WSDesc${
-                                    CityWeatherModel.windStrengthIndicator(this)
-                                }"
-                            )
-                        }"
-                    }
+                val isFavorite = if (index == favoriteCityIndex) View.VISIBLE else View.INVISIBLE
 
-                    val preResBackgroundAnim = AnimationUtils.loadAnimation(
-                        this@MainActivity, R.anim.focusing_show
-                    )
+                val weather = model.weatherInfo!!.result
 
-                    backgroundUrl = CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
-                        CityWeatherModel.toTimeRange(MyTime.fromString(model.updateTime))
-                    )
+                val preResWD = getStringResource(
+                    "WD${
+                        CityWeatherModel.windDirectionIndicator(
+                            weather.realtime.wind.direction
+                        )
+                    }"
+                )
 
-                    val preNowAqiGrade =
-                        CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn)
-                    val preNowTemper = weather.realtime.temperature.roundToInt().toString()
-                    val preNowAqi = weather.realtime.airQuality.aqi.chn.toString()
+                val preResWS = weather.realtime.wind.speed.run {
+                    "${
+                        getStringResource(
+                            "WS${
+                                CityWeatherModel.windStrengthIndicator(this)
+                            }"
+                        )
+                    } ${
+                        getStringResource(
+                            "WSDesc${
+                                CityWeatherModel.windStrengthIndicator(this)
+                            }"
+                        )
+                    }"
+                }
 
-                    val preResTodaySkyCon = getStringResource(weather.daily.skycon[0].value)
-                    val preResTodayTemper =
-                        "${weather.daily.temperature[0].max.toInt()} / ${weather.daily.temperature[0].min.toInt()} ℃"
-                    val preResTodayImage =
-                        CityWeatherModel.toWeatherIcon(weather.daily.skycon[0].value)
+                val preResBackgroundAnim = AnimationUtils.loadAnimation(
+                    this@MainActivity, R.anim.focusing_show
+                )
 
-                    val preResTomorrowSkyCon = getStringResource(weather.daily.skycon[1].value)
-                    val preResTomorrowTemper =
-                        "${weather.daily.temperature[1].max.toInt()} / ${weather.daily.temperature[1].min.toInt()} ℃"
-                    val preResTomorrowImage = CityWeatherModel.toWeatherIcon(
-                        weather.daily.skycon[1].value
-                    )
+                backgroundUrl = CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
+                    CityWeatherModel.toTimeRange(MyTime.fromString(model.updateTime))
+                )
 
-                    val preResDayAfterTomorrowWeekDay =
-                        getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
-                    val preResDayAfterTomorrowSkyCon =
-                        getStringResource(weather.daily.skycon[2].value)
-                    val preResDayAfterTomorrowTemper =
-                        "${weather.daily.temperature[2].max.toInt()} / ${weather.daily.temperature[2].min.toInt()} ℃"
-                    val preResDayAfterTomorrowImage = CityWeatherModel.toWeatherIcon(
-                        weather.daily.skycon[2].value
-                    )
+                val preNowAqiGrade = CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn)
+                val preNowTemper = weather.realtime.temperature.roundToInt().toString()
+                val preNowAqi = weather.realtime.airQuality.aqi.chn.toString()
 
-                    val backgroundDrawable = getDrawable(
-                        this@MainActivity, if (nightMode) R.drawable.night_mode_radius_rectangle
-                        else R.drawable.day_mode_radius_rectangle
-                    )
+                val preResTodaySkyCon = getStringResource(weather.daily.skycon[0].value)
+                val preResTodayTemper =
+                    "${weather.daily.temperature[0].max.toInt()} / ${weather.daily.temperature[0].min.toInt()} ℃"
+                val preResTodayImage = CityWeatherModel.toWeatherIcon(weather.daily.skycon[0].value)
 
-                    renderDone = true
+                val preResTomorrowSkyCon = getStringResource(weather.daily.skycon[1].value)
+                val preResTomorrowTemper =
+                    "${weather.daily.temperature[1].max.toInt()} / ${weather.daily.temperature[1].min.toInt()} ℃"
+                val preResTomorrowImage = CityWeatherModel.toWeatherIcon(
+                    weather.daily.skycon[1].value
+                )
 
-                    runOnUiThread {
-                        backgroundLL.background = backgroundDrawable
-                        cityNameTV.text = model.cityName
-                        isLocalIV.visibility = isLocal
-                        isFavoriteIV.visibility = isFavorite
-                        updateTimeTV.text = model.updateTime
-                        nowTemperTV.text = preNowTemper
-                        nowAqiTV.text = preNowAqi
-                        nowAqiGradeIV.setImageResource(preNowAqiGrade)
-                        nowWeatherTV.text = getStringResource(weather.realtime.skycon)
-                        nowWindDirectionTV.text = preResWD
-                        nowWindStrengthTV.text = preResWS
-                        nowWeatherBackground.startAnimation(preResBackgroundAnim)
-                        nowWeatherBackground.setImageResource(backgroundUrl!!)
-                        todayWeatherTV.text = preResTodaySkyCon
-                        todayTemperTV.text = preResTodayTemper
-                        todayWeatherIV.setImageResource(preResTodayImage)
-                        tomorrowWeatherTV.text = preResTomorrowSkyCon
-                        tomorrowTemperTV.text = preResTomorrowTemper
-                        tomorrowWeatherIV.setImageResource(preResTomorrowImage)
-                        weekDayOfDayAfterTomorrowTV.text = preResDayAfterTomorrowWeekDay
-                        dayAfterTomorrowWeatherTV.text = preResDayAfterTomorrowSkyCon
-                        dayAfterTomorrowTemperTV.text = preResDayAfterTomorrowTemper
-                        dayAfterTomorrowWeatherIV.setImageResource(preResDayAfterTomorrowImage)
+                val preResDayAfterTomorrowWeekDay =
+                    getStringResource("dayOfWeek${(model.todayWeekDay + 2) % 7}")
+                val preResDayAfterTomorrowSkyCon = getStringResource(weather.daily.skycon[2].value)
+                val preResDayAfterTomorrowTemper =
+                    "${weather.daily.temperature[2].max.toInt()} / ${weather.daily.temperature[2].min.toInt()} ℃"
+                val preResDayAfterTomorrowImage = CityWeatherModel.toWeatherIcon(
+                    weather.daily.skycon[2].value
+                )
 
-                        val dialogInitResult = initDetailDialog(model)
+                val backgroundDrawable = getDrawable(
+                    this@MainActivity, if (nightMode) R.drawable.night_mode_radius_rectangle
+                    else R.drawable.day_mode_radius_rectangle
+                )
 
-                        if (dialogInitResult.first) {
-                            detailBtn.setOnClickListener {
-                                initDetailDynamicElement(index, dialogInitResult.second)
-                                detailDialog?.show()
-                            }
+                renderDone = true
+
+                runOnUiThread {
+                    view.findViewById<LinearLayout>(R.id.card_ll_daily_weather_background).background =
+                        backgroundDrawable
+                    view.findViewById<TextView>(R.id.tv_cityTitle).text = model.cityName
+                    view.findViewById<ImageView>(R.id.card_iv_is_local).visibility = isLocal
+                    view.findViewById<ImageView>(R.id.card_iv_favorite).visibility = isFavorite
+                    view.findViewById<TextView>(R.id.tv_updateTime).text = model.updateTime
+                    view.findViewById<TextView>(R.id.tv_nowTemper).text = preNowTemper
+                    view.findViewById<TextView>(R.id.tv_aqi).text = preNowAqi
+                    view.findViewById<ImageView>(R.id.iv_aqiGrade).setImageResource(preNowAqiGrade)
+                    view.findViewById<TextView>(R.id.tv_nowWeather).text =
+                        getStringResource(weather.realtime.skycon)
+                    view.findViewById<TextView>(R.id.tv_windDirection).text = preResWD
+                    view.findViewById<TextView>(R.id.tv_windStrength).text = preResWS
+                    view.findViewById<ImageView>(R.id.iv_cardWeatherBackground)
+                        .startAnimation(preResBackgroundAnim)
+                    view.findViewById<ImageView>(R.id.iv_cardWeatherBackground)
+                        .setImageResource(backgroundUrl!!)
+                    view.findViewById<TextView>(R.id.tv_todayWeather).text = preResTodaySkyCon
+                    view.findViewById<TextView>(R.id.tv_todayTemper).text = preResTodayTemper
+                    view.findViewById<ImageView>(R.id.iv_todayWeather)
+                        .setImageResource(preResTodayImage)
+                    view.findViewById<TextView>(R.id.tv_tomorrowWeather).text = preResTomorrowSkyCon
+                    view.findViewById<TextView>(R.id.tv_tomorrowTemper).text = preResTomorrowTemper
+                    view.findViewById<ImageView>(R.id.iv_tomorrowWeather)
+                        .setImageResource(preResTomorrowImage)
+                    view.findViewById<TextView>(R.id.tv_weekDayOfDayAfterTomorrow).text =
+                        preResDayAfterTomorrowWeekDay
+                    view.findViewById<TextView>(R.id.tv_dayAfterTomorrowWeather).text =
+                        preResDayAfterTomorrowSkyCon
+                    view.findViewById<TextView>(R.id.tv_dayAfterTomorrowTemper).text =
+                        preResDayAfterTomorrowTemper
+                    view.findViewById<ImageView>(R.id.iv_dayAfterTomorrowWeather)
+                        .setImageResource(preResDayAfterTomorrowImage)
+
+                    val dialogInitResult = initDetailDialog(model)
+
+                    if (dialogInitResult.first) {
+                        detailBtn.setOnClickListener {
+                            initDetailDynamicElement(index, dialogInitResult.second)
+                            detailDialog?.show()
                         }
                     }
-                }.start()
+                }
             }
 
             private fun initDetailDialog(model: CityWeatherModel): Pair<Boolean, View> {
@@ -1166,7 +1147,7 @@ class MainActivity : Activity() {
         )
 
         override fun onBindViewHolder(holder: UserCitiesViewHolder, position: Int) =
-            holder.build(list[position], position)
+            holder.update(list[position], position, true)
 
 
         override fun getItemCount(): Int = list.size
@@ -1192,7 +1173,8 @@ class MainActivity : Activity() {
                 RequestOptions.bitmapTransform(
                     BlurTransformation(20, 3)
                 )
-            ).transition(withCrossFade()).placeholder(oldBackgroundDrawable).into(backgroundImageView!!)
+            ).transition(withCrossFade()).placeholder(oldBackgroundDrawable)
+                .into(backgroundImageView!!)
         }
 
         Glide.with(applicationContext).load(bitmapUrl).apply(
@@ -1205,6 +1187,7 @@ class MainActivity : Activity() {
             ) {
                 oldBackgroundDrawable = resource
             }
+
             override fun onLoadCleared(placeholder: Drawable?) {}
         })
     }
