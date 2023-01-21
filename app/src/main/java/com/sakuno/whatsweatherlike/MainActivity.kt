@@ -26,7 +26,6 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -199,9 +198,11 @@ class MainActivity : Activity() {
     private var backgroundImageView: ImageView? = null
 
     private var customCitiesFromPreferences: CustomCities
-        get() = Gson().fromJson(
+        get() = (Gson().fromJson(
             citiesPreferences!!.getString("cities", "") ?: "", CustomCities::class.java
-        ) ?: CustomCities(listOf())
+        ) ?: CustomCities(listOf())).apply {
+            if (check()) customCitiesFromPreferences = this
+        }
         set(value) {
             val editor = citiesPreferences?.edit()
             editor?.putString("cities", Gson().toJson(value, CustomCities::class.java))
@@ -256,9 +257,8 @@ class MainActivity : Activity() {
             weatherInfoPreferences = getSharedPreferences("weather", Context.MODE_PRIVATE)
             citiesPreferences = getSharedPreferences("cities", Context.MODE_PRIVATE)
             customCityList = customCitiesFromPreferences
-            if (customCityList!!.check()) customCitiesFromPreferences = customCityList!!
         } catch (_: Exception) {
-            Toast.makeText(this, "原始应用数据已损坏\n正在重新创建数据", Toast.LENGTH_LONG).show()
+            MyToast.Builder(this).setMessage("原始应用数据已损坏 正在重新创建数据").create().show()
             customCityList = CustomCities(listOf())
             customCityList!!.check()
             customCitiesFromPreferences = customCityList!!
@@ -343,15 +343,15 @@ class MainActivity : Activity() {
         })
 
         fleshData()
-
-        updateCurrentCardInThread()
     }
 
-    private fun updateCurrentCardInThread() {
+    private fun updateCurrentCardInThread(delayTime: Long = 1100) {
         Thread {
             val itemIndex = mainCardView!!.currentItem
-            Thread.sleep(1100)
+
+            if (delayTime != 0L) Thread.sleep(delayTime)
             if (mainCardView!!.currentItem != itemIndex) return@Thread
+
 
             var times = 0
             while (mutableCardView[mainCardView!!.currentItem] == null) {
@@ -359,19 +359,23 @@ class MainActivity : Activity() {
                 Thread.sleep(500)
                 times++
             }
-            mutableCardView[mainCardView!!.currentItem]!!.updateInThread(
-                customCityList!!.cities[mainCardView!!.currentItem],
-                mainCardView!!.currentItem,
-                getDataFromApi = true,
-                forceRefresh = false
-            )
+
+            runOnUiThread {
+                mutableCardView[mainCardView!!.currentItem]!!.updateInThread(
+                    customCityList!!.cities[mainCardView!!.currentItem],
+                    mainCardView!!.currentItem,
+                    getDataFromApi = true,
+                    forceRefresh = false,
+                    refreshLayout
+                )
+            }
+
         }.start()
     }
 
     private var skipUpdateBackground = false
 
     private fun waitingForUpdateBackground() {
-        Log.d("OldData", "Start waiting update background")
         skipUpdateBackground = false
         Thread {
             mainCardView!!.currentItem.let {
@@ -379,12 +383,19 @@ class MainActivity : Activity() {
                     Thread.sleep(100)
                     if (skipUpdateBackground) return@Thread
                 }
-                Log.d("OldData", "Start update background")
                 runOnUiThread {
                     mutableCardView[it]!!.backgroundUrl?.let(::setBlurBitmap)
                 }
             }
         }.start()
+    }
+
+    private fun reRenderBackground() {
+        mutableCardView[mainCardView!!.currentItem]?.run {
+            if (renderDone) runOnUiThread {
+                backgroundUrl?.let(::setBlurBitmap)
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -425,7 +436,7 @@ class MainActivity : Activity() {
             cityListAvailable = true
         } catch (_: Exception) {
             runOnUiThread {
-                Toast.makeText(this@MainActivity, "城市列表已损坏", Toast.LENGTH_SHORT).show()
+                MyToast.Builder(this@MainActivity).setMessage("城市列表已损坏").create().show()
             }
         }
     }
@@ -492,8 +503,9 @@ class MainActivity : Activity() {
         mainCardView!!.adapter =
             UserCitiesAdapter((customCityList ?: CustomCities(listOf())).cities)
 
-        mainCardView!!.currentItem = fleshDefaultIndex
+        mainCardView!!.setCurrentItem(fleshDefaultIndex, false)
         fleshDefaultIndex = favoriteCityIndex
+        updateCurrentCardInThread()
 
         progressDots!!.apply {
             dotNum = customCityList!!.cities.size
@@ -531,7 +543,7 @@ class MainActivity : Activity() {
 
         if (!cityListAvailable) {
             runOnUiThread {
-                Toast.makeText(this@MainActivity, "城市列表已损坏", Toast.LENGTH_SHORT).show()
+                MyToast.Builder(this@MainActivity).setMessage("城市列表已损坏").create().show()
             }
             return addCityDialog
         }
@@ -635,7 +647,7 @@ class MainActivity : Activity() {
                 val searchKey = textView.text.toString()
 
                 if (searchKey.isEmpty()) {
-                    Toast.makeText(this@MainActivity, "城市名不能为空", Toast.LENGTH_SHORT).show()
+                    MyToast.Builder(this@MainActivity).setMessage("城市名不能为空").create().show()
                     return@setOnEditorActionListener true
                 }
 
@@ -644,7 +656,7 @@ class MainActivity : Activity() {
                 val searchRes = cityList!!.searchCity(searchKey)
 
                 if (searchRes.isEmpty()) {
-                    Toast.makeText(this@MainActivity, "搜索结果为空", Toast.LENGTH_SHORT).show()
+                    MyToast.Builder(this@MainActivity).setMessage("搜索结果为空").create().show()
                     return@setOnEditorActionListener true
                 }
 
@@ -1011,7 +1023,8 @@ class MainActivity : Activity() {
         private var list: List<City>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
-        inner class UserCitiesViewHolder(val view: View, val fromAdd: Boolean = false) : RecyclerView.ViewHolder(view) {
+        inner class UserCitiesViewHolder(val view: View, val fromAdd: Boolean = false) :
+            RecyclerView.ViewHolder(view) {
 
             private var updateTime: MyTime? = null
 
@@ -1053,11 +1066,14 @@ class MainActivity : Activity() {
             }
 
             fun updateInThread(
-                position: City, index: Int, getDataFromApi: Boolean, forceRefresh: Boolean, refreshLayout: BetterSwipeRefreshLayout? = null
+                position: City,
+                index: Int,
+                getDataFromApi: Boolean,
+                forceRefresh: Boolean,
+                refreshLayout: BetterSwipeRefreshLayout? = null
             ) {
-
                 if ((!forceRefresh) && justUpdate) return
-
+                refreshLayout?.isRefreshing = true
                 Thread {
                     mutableCardView[index] = this
 
@@ -1075,9 +1091,8 @@ class MainActivity : Activity() {
                             weatherInfoPreferences!!.getString(position.hashCode().toString(), "")
                                 .takeIf { it?.isNotBlank() == true }.run {
                                     runOnUiThread {
-                                        Toast.makeText(
-                                            this@MainActivity, "刷新失败，请检查网络", Toast.LENGTH_LONG
-                                        ).show()
+                                        MyToast.Builder(this@MainActivity).setMessage("刷新失败，请检查网络")
+                                            .create().show()
                                     }
                                     if (!model.updateWithDataString(
                                             this@run ?: "", position.showName
@@ -1103,11 +1118,12 @@ class MainActivity : Activity() {
 
                     justUpdate = true
 
-                    refreshLayout?.isRefreshing = false
+                    runOnUiThread {
+                        refreshLayout?.isRefreshing = false
+                    }
 
                     insertData(model, index)
                 }.start()
-
             }
 
             private fun insertData(model: CityWeatherModel, index: Int) {
@@ -1151,6 +1167,8 @@ class MainActivity : Activity() {
                 backgroundUrl = CityWeatherModel.toWeatherBackground(weather.realtime.skycon)(
                     CityWeatherModel.toTimeRange(MyTime.fromString(model.updateTime))
                 )
+
+                reRenderBackground()
 
                 val preNowAqiGrade = CityWeatherModel.toAqiIcon(weather.realtime.airQuality.aqi.chn)
                 val preNowTemper = weather.realtime.temperature.roundToInt().toString()
@@ -1247,9 +1265,8 @@ class MainActivity : Activity() {
 
                 runOnUiThread {
                     detailBtn.setOnLongClickListener {
-                        if (index == 0) Toast.makeText(
-                            this@MainActivity, "不能删除本地城市！", Toast.LENGTH_SHORT
-                        ).show()
+                        if (index == 0) MyToast.Builder(this@MainActivity).setMessage("不能删除本地城市")
+                            .create().show()
                         else AlertDialog.Builder(this@MainActivity).setTitle("提示")
                             .setMessage("确认删除该城市？").setPositiveButton("删除") { _, _ ->
                                 removeCity(index)
@@ -1365,7 +1382,8 @@ class MainActivity : Activity() {
                 }
                 runOnUiThread {
                     if (firstLoad == index) view.startAnimation(
-                        AnimationUtils.loadAnimation(this@MainActivity,
+                        AnimationUtils.loadAnimation(
+                            this@MainActivity,
                             R.anim.glide_in.also { firstLoad = -1 })
                     )
                     view.isInvisible = false
@@ -1374,9 +1392,9 @@ class MainActivity : Activity() {
 
             private fun initDetailDialog(): Pair<Boolean, View?> {
 
-                if(cardModel == null) return Pair(false, null)
+                if (cardModel == null) return Pair(false, null)
 
-                if(cardModel!!.second) return Pair(true, detailDialogView)
+                if (cardModel!!.second) return Pair(true, detailDialogView)
 
                 var available = true
 

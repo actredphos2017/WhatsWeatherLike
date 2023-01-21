@@ -158,5 +158,6 @@
     <string name="sun_rise_and_fall">日起日落</string>
     <string name="real_time">实时：</string>
     <string name="edit_cards">编辑卡片</string>
+    <string name="my_cities">城市列表</string>
 
 </resources>

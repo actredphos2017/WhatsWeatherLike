@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingHorizontal="16dp"
     android:orientation="vertical">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -12,8 +13,9 @@
 
         <ImageButton
             android:id="@+id/manage_ib_back"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginVertical="12dp"
             android:background="@color/translation"
             android:contentDescription="@string/back"
             android:paddingHorizontal="6dp"
@@ -24,10 +26,25 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:src="@drawable/icon_back" />
 
+        <ImageButton
+            android:id="@+id/manage_ib_add"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginVertical="12dp"
+            android:background="@color/translation"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="6dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_add"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="@string/add_city" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/edit_cards"
+            android:text="@string/my_cities"
             android:textSize="20dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -42,6 +59,7 @@
         android:id="@+id/manage_first_card"
         android:layout_width="match_parent"
         android:layout_height="64dp"
+        app:cardCornerRadius="12dp"
         android:layout_margin="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -50,8 +68,8 @@
 
             <ImageButton
                 android:id="@+id/manageitem_ib_favorite"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:layout_marginStart="16dp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -67,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:text="本地城市"
-                android:textSize="24sp"
+                android:textSize="16sp"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/manageitem_ib_favorite"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -75,14 +93,14 @@
 
             <ImageView
                 android:id="@+id/manageitem_iv_drag"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:src="@drawable/icon_lock"
                 android:scaleType="center"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_marginEnd="4dp"
+                android:layout_marginEnd="12dp"
                 tools:ignore="ContentDescription" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
