@@ -30,6 +30,8 @@ import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources.getDrawable
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isInvisible
+import androidx.core.view.size
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.baidu.location.LocationClient
@@ -69,6 +71,8 @@ class MainActivity : Activity() {
 
     private var cityListAvailable = false
 
+    private var firstLoad = 0
+
     private var cityList: CityList? = null
 
     private var mainCardView: ViewPager2? = null
@@ -81,6 +85,116 @@ class MainActivity : Activity() {
         mutableMapOf()
 
     private var refreshLayout: BetterSwipeRefreshLayout? = null
+
+    private var quickModelArray: Array<QuickModel>? = null
+
+    inner class QuickModel(private val position: City) {
+        var useful = true
+
+        var updateTime: MyTime? = null
+
+        var model: CityWeatherModel? = null
+
+        var cityName: String? = null
+
+        var weather: Result? = null
+
+        var preResWD: String? = null
+
+        var preResWS: String? = null
+
+        var preNowAqiGrade: Int? = null
+        var preNowTemper: String? = null
+        var preNowAqi: String? = null
+
+        var preResTodaySkyCon: String? = null
+        var preResTodayTemper: String? = null
+        var preResTodayImage: Int? = null
+
+        var preResTomorrowSkyCon: String? = null
+        var preResTomorrowTemper: String? = null
+        var preResTomorrowImage: Int? = null
+
+        var preResDayAfterTomorrowWeekDay: String? = null
+        var preResDayAfterTomorrowSkyCon: String? = null
+        var preResDayAfterTomorrowTemper: String? = null
+        var preResDayAfterTomorrowImage: Int? = null
+
+        var backgroundDrawable: Drawable? = null
+
+        init {
+            val tempModel = CityWeatherModel()
+            weatherInfoPreferences!!.getString(position.hashCode().toString(), "")
+                .takeIf { it?.isNotBlank() == true }.run {
+                    if (!tempModel.updateWithDataString(
+                            this@run ?: "", position.showName
+                        ).available
+                    ) {
+                        useful = false
+                    } else {
+                        model = tempModel
+                        cityName = tempModel.cityName
+                        updateTime = MyTime.fromString(tempModel.updateTime)
+                        weather = tempModel.weatherInfo!!.result
+                        preResWD = getStringResource(
+                            "WD${
+                                CityWeatherModel.windDirectionIndicator(
+                                    tempModel.weatherInfo!!.result.realtime.wind.direction
+                                )
+                            }"
+                        )
+                        preResWS = tempModel.weatherInfo!!.result.realtime.wind.speed.run {
+                            "${
+                                getStringResource(
+                                    "WS${
+                                        CityWeatherModel.windStrengthIndicator(this)
+                                    }"
+                                )
+                            } ${
+                                getStringResource(
+                                    "WSDesc${
+                                        CityWeatherModel.windStrengthIndicator(this)
+                                    }"
+                                )
+                            }"
+                        }
+                        preNowAqiGrade =
+                            CityWeatherModel.toAqiIcon(tempModel.weatherInfo!!.result.realtime.airQuality.aqi.chn)
+                        preNowTemper =
+                            tempModel.weatherInfo!!.result.realtime.temperature.roundToInt()
+                                .toString()
+                        preNowAqi =
+                            tempModel.weatherInfo!!.result.realtime.airQuality.aqi.chn.toString()
+                        preResTodaySkyCon =
+                            getStringResource(tempModel.weatherInfo!!.result.daily.skycon[0].value)
+                        preResTodayTemper =
+                            "${tempModel.weatherInfo!!.result.daily.temperature[0].max.toInt()} / ${tempModel.weatherInfo!!.result.daily.temperature[0].min.toInt()} ℃"
+                        preResTodayImage =
+                            CityWeatherModel.toWeatherIcon(tempModel.weatherInfo!!.result.daily.skycon[0].value)
+                        preResTomorrowSkyCon =
+                            getStringResource(tempModel.weatherInfo!!.result.daily.skycon[1].value)
+                        preResTomorrowTemper =
+                            "${tempModel.weatherInfo!!.result.daily.temperature[1].max.toInt()} / ${tempModel.weatherInfo!!.result.daily.temperature[1].min.toInt()} ℃"
+                        preResTomorrowImage = CityWeatherModel.toWeatherIcon(
+                            tempModel.weatherInfo!!.result.daily.skycon[1].value
+                        )
+                        preResDayAfterTomorrowWeekDay =
+                            getStringResource("dayOfWeek${(tempModel.todayWeekDay + 2) % 7}")
+                        preResDayAfterTomorrowSkyCon =
+                            getStringResource(tempModel.weatherInfo!!.result.daily.skycon[2].value)
+                        preResDayAfterTomorrowTemper =
+                            "${tempModel.weatherInfo!!.result.daily.temperature[2].max.toInt()} / ${tempModel.weatherInfo!!.result.daily.temperature[2].min.toInt()} ℃"
+                        preResDayAfterTomorrowImage = CityWeatherModel.toWeatherIcon(
+                            tempModel.weatherInfo!!.result.daily.skycon[2].value
+                        )
+                        backgroundDrawable = getDrawable(
+                            this@MainActivity, if (nightMode) R.drawable.night_mode_radius_rectangle
+                            else R.drawable.day_mode_radius_rectangle
+                        )!!
+                    }
+                }
+        }
+    }
 
     private var backgroundImageView: ImageView? = null
 
@@ -156,7 +270,13 @@ class MainActivity : Activity() {
 
         try {
             locationClient = LocationClient(this)
-            locationClient!!.registerLocationListener(CityWeatherModel.localPositionListener)
+            locationClient!!.run {
+                registerLocationListener(
+                    CityWeatherModel.localPositionListener(
+                        this
+                    )
+                )
+            }
         } catch (_: Exception) {
             Log.d("BaiduLocation", "请同意百度隐私合规接口")
         }
@@ -174,28 +294,43 @@ class MainActivity : Activity() {
         }
 
         mainCardView = findViewById(R.id.vp_cardsView)
-
         progressDots = findViewById(R.id.progress_dots)
+        refreshLayout = findViewById(R.id.rfl_fresh_layout)
+        backgroundImageView = findViewById(R.id.iv_background)
 
+        mainCardView!!.offscreenPageLimit = 1
         fleshDefaultIndex = favoriteCityIndex
 
-        refreshLayout = findViewById(R.id.rfl_fresh_layout)
+        progressDots!!.apply {
+            currentDotColor = getColor(R.color.white)
+            dotColor = getColor(R.color.white_translation2)
+            textColor = getColor(R.color.white_translation)
+        }
 
         refreshLayout!!.run {
             setOnRefreshListener {
+                isRefreshing = true
                 fleshDefaultIndex = mainCardView!!.currentItem
-                fleshData()
+                mutableCardView[mainCardView!!.currentItem]?.updateInThread(
+                    customCityList!!.cities[mainCardView!!.currentItem],
+                    mainCardView!!.currentItem,
+                    getDataFromApi = true,
+                    forceRefresh = true,
+                    this
+                )
             }
             isRefreshing = true
-            fleshData()
         }
 
         mainCardView!!.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageScrollStateChanged(state: Int) {
                 super.onPageScrollStateChanged(state)
+
                 when (state) {
                     ViewPager2.SCROLL_STATE_DRAGGING -> skipUpdateBackground = true
                     ViewPager2.SCROLL_STATE_IDLE -> {
+                        updateCurrentCardInThread()
+
                         progressDots!!.apply {
                             currentDot = mainCardView!!.currentItem
                             applyChanges()
@@ -207,21 +342,47 @@ class MainActivity : Activity() {
             }
         })
 
-        backgroundImageView = findViewById(R.id.iv_background)
+        fleshData()
+
+        updateCurrentCardInThread()
+    }
+
+    private fun updateCurrentCardInThread() {
+        Thread {
+            val itemIndex = mainCardView!!.currentItem
+            Thread.sleep(1100)
+            if (mainCardView!!.currentItem != itemIndex) return@Thread
+
+            var times = 0
+            while (mutableCardView[mainCardView!!.currentItem] == null) {
+                if (times > 5) return@Thread
+                Thread.sleep(500)
+                times++
+            }
+            mutableCardView[mainCardView!!.currentItem]!!.updateInThread(
+                customCityList!!.cities[mainCardView!!.currentItem],
+                mainCardView!!.currentItem,
+                getDataFromApi = true,
+                forceRefresh = false
+            )
+        }.start()
     }
 
     private var skipUpdateBackground = false
 
     private fun waitingForUpdateBackground() {
+        Log.d("OldData", "Start waiting update background")
         skipUpdateBackground = false
         Thread {
-            val tempItem = mainCardView!!.currentItem
-            while (mutableCardView[tempItem]?.renderDone != true) {
-                Thread.sleep(100)
-                if (skipUpdateBackground) return@Thread
-            }
-            runOnUiThread {
-                mutableCardView[tempItem]!!.backgroundUrl?.let(::setBlurBitmap)
+            mainCardView!!.currentItem.let {
+                while (mutableCardView[it]?.renderDone != true) {
+                    Thread.sleep(100)
+                    if (skipUpdateBackground) return@Thread
+                }
+                Log.d("OldData", "Start update background")
+                runOnUiThread {
+                    mutableCardView[it]!!.backgroundUrl?.let(::setBlurBitmap)
+                }
             }
         }.start()
     }
@@ -317,32 +478,30 @@ class MainActivity : Activity() {
     }
 
     private fun fleshData() {
+        quickModelArray = mutableListOf<QuickModel>().apply {
+            for (it in customCityList!!.cities) add(QuickModel(it))
+        }.toTypedArray()
+
         if (!getEnoughPermissions()) return
 
         Log.d("BaiduLocation", "Start Locate")
         locationClient?.start()
 
-        mainCardView!!.adapter = this.UserCitiesAdapter(
-            (customCityList ?: CustomCities(listOf())).cities
-        )
+        firstLoad = fleshDefaultIndex
 
-
-
-        refreshLayout?.isRefreshing = false
-
-        mainCardView!!.startAnimation(AnimationUtils.loadAnimation(this, R.anim.alpha_show))
+        mainCardView!!.adapter =
+            UserCitiesAdapter((customCityList ?: CustomCities(listOf())).cities)
 
         mainCardView!!.currentItem = fleshDefaultIndex
         fleshDefaultIndex = favoriteCityIndex
 
         progressDots!!.apply {
-            currentDotColor = getColor(R.color.white)
-            dotColor = getColor(R.color.white_translation2)
-            textColor = getColor(R.color.white_translation)
             dotNum = customCityList!!.cities.size
             currentDot = mainCardView!!.currentItem
             applyChanges()
         }
+
+        refreshLayout?.isRefreshing = false
 
         waitingForUpdateBackground()
     }
@@ -453,8 +612,7 @@ class MainActivity : Activity() {
                                 AlertDialog.Builder(this@MainActivity).setTitle("提示")
                                     .setMessage("该城市已存在，详见第 ${sameCityIndex + 1} 张卡片")
                                     .setPositiveButton("确定") { _, _ ->
-                                        fleshDefaultIndex = sameCityIndex
-                                        fleshData()
+                                        mainCardView!!.currentItem = sameCityIndex
                                         addCityDialog!!.hide()
                                     }.show()
                             } else {
@@ -488,42 +646,6 @@ class MainActivity : Activity() {
                 if (searchRes.isEmpty()) {
                     Toast.makeText(this@MainActivity, "搜索结果为空", Toast.LENGTH_SHORT).show()
                     return@setOnEditorActionListener true
-                }
-
-                for (each in searchRes) View.inflate(
-                    this@MainActivity, R.layout.add_city_result_item, null
-                ).run {
-                    isClickable = true
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp2px(64)
-                    ).run {
-                        setMargins(0, dp2px(4), 0, dp2px(4))
-                        this
-                    }
-                    findViewById<TextView>(R.id.addcityres_tv_result_name).text = each.showName
-                    findViewById<TextView>(R.id.addcityres_tv_longitude).text =
-                        each.longitude.toString()
-                    findViewById<TextView>(R.id.addcityres_tv_latitude).text =
-                        each.latitude.toString()
-
-                    setOnClickListener {
-                        val sameCityIndex = customCityList!!.cities.indexOf(each)
-                        if (sameCityIndex >= 0) {
-                            AlertDialog.Builder(this@MainActivity).setTitle("提示")
-                                .setMessage("该城市已存在，详见第 ${sameCityIndex + 1} 张卡片")
-                                .setPositiveButton("确定") { _, _ ->
-                                    fleshDefaultIndex = sameCityIndex
-                                    fleshData()
-                                    addCityDialog!!.hide()
-                                }.show()
-                        } else {
-                            addCity(each)
-                            fleshDefaultIndex = customCityList!!.cities.size - 1
-                            fleshData()
-                            addCityDialog!!.hide()
-                        }
-                    }
-                    searchResultLayout.addView(this)
                 }
 
                 return@setOnEditorActionListener false
@@ -883,17 +1005,27 @@ class MainActivity : Activity() {
         }
     }
 
+    data class CardModel(val first: CityWeatherModel, var second: Boolean)
+
     inner class UserCitiesAdapter(
         private var list: List<City>,
     ) : RecyclerView.Adapter<UserCitiesAdapter.UserCitiesViewHolder>() {
 
-        inner class UserCitiesViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
+        inner class UserCitiesViewHolder(val view: View, val fromAdd: Boolean = false) : RecyclerView.ViewHolder(view) {
 
             private var updateTime: MyTime? = null
+
+            private var cardModel: CardModel? = null
 
             private var detailDialog: Dialog? = null
 
             var backgroundUrl: Int? = null
+
+            private var fromBlack = true
+
+            private var detailDialogView: View? = null
+
+            private var justUpdate = false
 
             private val detailBtn: View = view.findViewById(R.id.btn_to_detail)
 
@@ -920,8 +1052,11 @@ class MainActivity : Activity() {
                 }
             }
 
-            @SuppressLint("SetTextI18n")
-            fun update(position: City, index: Int, getDataFromApi: Boolean) {
+            fun updateInThread(
+                position: City, index: Int, getDataFromApi: Boolean, forceRefresh: Boolean, refreshLayout: BetterSwipeRefreshLayout? = null
+            ) {
+
+                if ((!forceRefresh) && justUpdate) return
 
                 Thread {
                     mutableCardView[index] = this
@@ -929,23 +1064,6 @@ class MainActivity : Activity() {
                     val model = CityWeatherModel()
 
                     val editor = weatherInfoPreferences!!.edit()
-
-                    runOnUiThread {
-                        detailBtn.setOnLongClickListener {
-                            if (index == 0) Toast.makeText(
-                                this@MainActivity, "不能删除本地城市！", Toast.LENGTH_SHORT
-                            ).show()
-                            else AlertDialog.Builder(this@MainActivity).setTitle("提示")
-                                .setMessage("确认删除该城市？").setPositiveButton("删除") { _, _ ->
-                                    removeCity(index)
-                                    fleshDefaultIndex = favoriteCityIndex
-                                    fleshData()
-                                }.setNegativeButton("取消") { _, _ ->
-
-                                }.create().show()
-                            true
-                        }
-                    }
 
                     if (getDataFromApi) {
                         if (model.updateWithCity(caiyunWeatherKey, position).available) {
@@ -983,12 +1101,18 @@ class MainActivity : Activity() {
 
                     updateTime = MyTime.fromString(model.updateTime)
 
+                    justUpdate = true
+
+                    refreshLayout?.isRefreshing = false
+
                     insertData(model, index)
                 }.start()
 
             }
 
             private fun insertData(model: CityWeatherModel, index: Int) {
+
+                cardModel = CardModel(model, false)
 
                 val isLocal = if (index == 0) View.VISIBLE else View.INVISIBLE
 
@@ -1074,10 +1198,13 @@ class MainActivity : Activity() {
                         getStringResource(weather.realtime.skycon)
                     view.findViewById<TextView>(R.id.tv_windDirection).text = preResWD
                     view.findViewById<TextView>(R.id.tv_windStrength).text = preResWS
-                    view.findViewById<ImageView>(R.id.iv_cardWeatherBackground)
-                        .startAnimation(preResBackgroundAnim)
-                    view.findViewById<ImageView>(R.id.iv_cardWeatherBackground)
-                        .setImageResource(backgroundUrl!!)
+
+                    view.findViewById<ImageView>(R.id.iv_cardWeatherBackground).apply {
+                        if (fromBlack) startAnimation(preResBackgroundAnim)
+                        setImageResource(backgroundUrl!!)
+
+                    }
+
                     view.findViewById<TextView>(R.id.tv_todayWeather).text = preResTodaySkyCon
                     view.findViewById<TextView>(R.id.tv_todayTemper).text = preResTodayTemper
                     view.findViewById<ImageView>(R.id.iv_todayWeather)
@@ -1095,32 +1222,176 @@ class MainActivity : Activity() {
                     view.findViewById<ImageView>(R.id.iv_dayAfterTomorrowWeather)
                         .setImageResource(preResDayAfterTomorrowImage)
 
-                    val dialogInitResult = initDetailDialog(model)
+                    if (view.isInvisible) {
+                        view.startAnimation(AnimationUtils.loadAnimation(this@MainActivity,
+                            if (index == firstLoad || fromAdd) R.anim.glide_in.also {
+                                firstLoad = -1
+                            } else R.anim.alpha_show))
+                        view.isInvisible = false
+                    }
 
-                    if (dialogInitResult.first) {
-                        detailBtn.setOnClickListener {
-                            initDetailDynamicElement(index, dialogInitResult.second)
-                            detailDialog?.show()
+                    detailBtn.setOnClickListener {
+                        initDetailDialog().apply {
+                            if (first) {
+                                initDetailDynamicElement(index, second!!)
+                                detailDialog?.show()
+                            }
                         }
                     }
                 }
             }
 
-            private fun initDetailDialog(model: CityWeatherModel): Pair<Boolean, View> {
+            fun insertOldData(index: Int) {
+
+                mutableCardView[index] = this
+
+                runOnUiThread {
+                    detailBtn.setOnLongClickListener {
+                        if (index == 0) Toast.makeText(
+                            this@MainActivity, "不能删除本地城市！", Toast.LENGTH_SHORT
+                        ).show()
+                        else AlertDialog.Builder(this@MainActivity).setTitle("提示")
+                            .setMessage("确认删除该城市？").setPositiveButton("删除") { _, _ ->
+                                removeCity(index)
+                                fleshDefaultIndex = mainCardView!!.currentItem.let {
+                                    if (it >= mainCardView!!.size) mainCardView!!.size - 1
+                                    else it
+                                }
+                                fleshData()
+                            }.setNegativeButton("取消") { _, _ ->
+
+                            }.create().show()
+                        true
+                    }
+                }
+
+                quickModelArray!!.getOrNull(index)?.takeIf {
+                    it.useful
+                }?.run {
+                    fromBlack = false
+
+                    cardModel = CardModel(model!!, false)
+
+                    Log.d("OldData", "Start insert old data")
+
+                    backgroundUrl = CityWeatherModel.toWeatherBackground(weather!!.realtime.skycon)(
+                        CityWeatherModel.toTimeRange(updateTime!!)
+                    )
+
+                    renderDone = true
+
+                    runOnUiThread {
+
+                        view.apply {
+                            findViewById<ImageView>(R.id.iv_cardWeatherBackground).apply {
+                                if (fromBlack) startAnimation(
+                                    AnimationUtils.loadAnimation(
+                                        this@MainActivity, R.anim.focusing_show
+                                    )
+                                )
+                                fromBlack = false
+                                setImageResource(backgroundUrl!!)
+                            }
+
+                            findViewById<LinearLayout>(R.id.card_ll_daily_weather_background).background =
+                                backgroundDrawable
+
+                            findViewById<TextView>(R.id.tv_cityTitle).text = cityName
+
+                            findViewById<ImageView>(R.id.card_iv_is_local).visibility =
+                                if (index == 0) View.VISIBLE else View.INVISIBLE
+
+                            findViewById<ImageView>(R.id.card_iv_favorite).visibility =
+                                if (index == favoriteCityIndex) View.VISIBLE else View.INVISIBLE
+
+                            findViewById<TextView>(R.id.tv_updateTime).text = updateTime.toString()
+
+                            findViewById<TextView>(R.id.tv_nowTemper).text = preNowTemper
+
+                            findViewById<TextView>(R.id.tv_aqi).text = preNowAqi
+
+                            findViewById<ImageView>(R.id.iv_aqiGrade).setImageResource(
+                                preNowAqiGrade!!
+                            )
+
+                            findViewById<TextView>(R.id.tv_nowWeather).text =
+                                getStringResource(weather!!.realtime.skycon)
+
+                            findViewById<TextView>(R.id.tv_windDirection).text = preResWD
+
+                            findViewById<TextView>(R.id.tv_windStrength).text = preResWS
+
+                            findViewById<TextView>(R.id.tv_todayWeather).text = preResTodaySkyCon
+
+                            findViewById<TextView>(R.id.tv_todayTemper).text = preResTodayTemper
+
+                            findViewById<ImageView>(R.id.iv_todayWeather).setImageResource(
+                                preResTodayImage!!
+                            )
+
+                            findViewById<TextView>(R.id.tv_tomorrowWeather).text =
+                                preResTomorrowSkyCon
+
+                            findViewById<TextView>(R.id.tv_tomorrowTemper).text =
+                                preResTomorrowTemper
+
+                            findViewById<ImageView>(R.id.iv_tomorrowWeather).setImageResource(
+                                preResTomorrowImage!!
+                            )
+
+                            findViewById<TextView>(R.id.tv_weekDayOfDayAfterTomorrow).text =
+                                preResDayAfterTomorrowWeekDay
+
+                            findViewById<TextView>(R.id.tv_dayAfterTomorrowWeather).text =
+                                preResDayAfterTomorrowSkyCon
+
+                            findViewById<TextView>(R.id.tv_dayAfterTomorrowTemper).text =
+                                preResDayAfterTomorrowTemper
+
+                            findViewById<ImageView>(R.id.iv_dayAfterTomorrowWeather).setImageResource(
+                                preResDayAfterTomorrowImage!!
+                            )
+
+                            detailBtn.setOnClickListener {
+                                initDetailDialog().apply {
+                                    if (first) {
+                                        initDetailDynamicElement(index, second!!)
+                                        detailDialog?.show()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                runOnUiThread {
+                    if (firstLoad == index) view.startAnimation(
+                        AnimationUtils.loadAnimation(this@MainActivity,
+                            R.anim.glide_in.also { firstLoad = -1 })
+                    )
+                    view.isInvisible = false
+                }
+            }
+
+            private fun initDetailDialog(): Pair<Boolean, View?> {
+
+                if(cardModel == null) return Pair(false, null)
+
+                if(cardModel!!.second) return Pair(true, detailDialogView)
 
                 var available = true
 
                 detailDialog = Dialog(this@MainActivity, R.style.dialog_bottom_full)
 
-                val view = View.inflate(this@MainActivity, R.layout.detailed_info, null)
+                detailDialogView = View.inflate(this@MainActivity, R.layout.detailed_info, null)
 
                 try {
-                    initDetailInfo(model, view)
+                    initDetailInfo(cardModel!!.first, detailDialogView!!)
+                    cardModel!!.second = true
                 } catch (_: Exception) {
                     available = false
                 }
 
-                view.findViewById<ImageButton>(R.id.detail_ib_back)
+                detailDialogView!!.findViewById<ImageButton>(R.id.detail_ib_back)
                     .setOnClickListener { detailDialog!!.hide() }
 
                 detailDialog!!.setCanceledOnTouchOutside(true)
@@ -1130,24 +1401,26 @@ class MainActivity : Activity() {
                 window.setGravity(Gravity.BOTTOM)
                 window.setWindowAnimations(R.style.share_animation)
 
-                window.setContentView(view)
+                window.setContentView(detailDialogView)
                 window.setLayout(
                     WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT
                 )
 
-                return Pair(available, view)
+                return Pair(available, detailDialogView)
 
             }
         }
 
         override fun onCreateViewHolder(
             parent: ViewGroup, viewType: Int
-        ): UserCitiesViewHolder = UserCitiesViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.weather_card, parent, false)
-        )
+        ): UserCitiesViewHolder = UserCitiesViewHolder(LayoutInflater.from(parent.context)
+            .inflate(R.layout.weather_card, parent, false).apply {
+                isInvisible = true
+            })
 
-        override fun onBindViewHolder(holder: UserCitiesViewHolder, position: Int) =
-            holder.update(list[position], position, true)
+        override fun onBindViewHolder(holder: UserCitiesViewHolder, position: Int) {
+            Thread { holder.insertOldData(position) }.start()
+        }
 
 
         override fun getItemCount(): Int = list.size
@@ -1161,6 +1434,7 @@ class MainActivity : Activity() {
         bitmap
     }
 
+    @SuppressLint("DiscouragedApi")
     fun getStringResource(imageName: String): String =
         resources.getIdentifier(imageName, "string", packageName).takeIf { it != 0 }
             ?.run(::getString) ?: ""

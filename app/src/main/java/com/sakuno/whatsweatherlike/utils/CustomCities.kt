@@ -31,4 +31,5 @@ data class City(
     companion object {
         val getLocalCity = City(0.0, 0.0, "", true)
     }
+
 }

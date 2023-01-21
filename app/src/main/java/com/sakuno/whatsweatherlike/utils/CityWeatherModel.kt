@@ -1,8 +1,10 @@
 package com.sakuno.whatsweatherlike.utils
 
+
 import android.util.Log
 import com.baidu.location.BDAbstractLocationListener
 import com.baidu.location.BDLocation
+import com.baidu.location.LocationClient
 import com.google.gson.Gson
 import com.sakuno.whatsweatherlike.R
 import java.text.SimpleDateFormat
@@ -28,14 +30,20 @@ class CityWeatherModel {
     var dataBody: String = ""
 
     companion object {
-        var localCityPosition: City? = null
 
-        val localPositionListener = object : BDAbstractLocationListener() {
+        class LocationListener(private val client: LocationClient) : BDAbstractLocationListener() {
             override fun onReceiveLocation(p0: BDLocation) {
                 Log.d("BaiduLocation", "ErrorCode: ${p0.locType}")
                 localCityPosition = City(p0.longitude, p0.latitude, "", false)
                 locateFinish = true
+                client.stop()
             }
+        }
+
+        var localCityPosition: City? = null
+
+        val localPositionListener: (LocationClient) -> LocationListener = {
+            LocationListener(it)
         }
 
         var locateFinish = false
